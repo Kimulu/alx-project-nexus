@@ -40,7 +40,7 @@ const Hero = () => {
                 />
               </div>
             </h1>
-            <p className="text-gray-600 text-[18px] font-normal font-epilogue mt-6 pt-2 leading-[32px] max-w-[600px]">
+            <p className="text-gray-600 text-[16px] font-normal font-epilogue mt-6 pt-2 leading-[32px] max-w-[600px]">
               Great platform for the job seeker that is searching for new career
               heights and passionate about startups.
             </p>

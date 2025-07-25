@@ -70,3 +70,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
+.cta-angled-bottom-left {
+  clip-path: polygon(7% 0, 100% 0, 100% 84%, 93% 100%, 0 100%, 0 16%);
+}
