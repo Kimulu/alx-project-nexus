@@ -3,10 +3,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { useRouter } from "next/router"; // Import useRouter
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const router = useRouter(); // Initialize useRouter
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,16 +27,25 @@ const Header = () => {
     };
   }, []);
 
+  // Function to check if a link is active
+  const isActive = (pathname: string) => {
+    // For "Find Jobs" and "Browse Companies", check if the current path starts with the link's href
+    // This handles cases like /jobs/123 being active for /jobs
+    if (pathname === "/") {
+      // Home page is special, only active if exactly '/'
+      return router.pathname === pathname;
+    }
+    return router.pathname.startsWith(pathname);
+  };
+
   return (
     <header
       className={`w-full fixed top-0 z-50
         transition-all duration-300 ease-in-out
         ${scrolled ? "bg-white shadow-md py-3" : "bg-transparent py-4"}
-        `} // Added bg-white/90 for initial subtle background, adjusted py
+        `}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex items-center justify-between py-0">
-        {" "}
-        {/* py-0 here as padding is now on header */}
         <div className="flex items-center justify-between w-full">
           {/* Left Side: Logo + Desktop Nav */}
           <div className="flex items-center space-x-12">
@@ -52,14 +63,26 @@ const Header = () => {
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center space-x-6">
               <Link
-                href="/jobs"
-                className="text-gray-700 font-nav text-[14px] mt-1.5 hover:text-[#4640DE] transition"
+                href="/FindJobs" // Changed to /jobs as per your page structure
+                className={`text-gray-700 font-nav text-[14px] mt-1.5 hover:text-[#4640DE] transition
+                  ${
+                    isActive("/FindJobs")
+                      ? "text-[#4640DE] border-b-2 border-[#4640DE]"
+                      : ""
+                  }
+                `}
               >
                 Find Jobs
               </Link>
               <Link
-                href="/companies"
-                className="text-gray-700 font-nav text-[14px] mt-1.5 hover:text-[#4640DE] transition"
+                href="/BrowseCompanies" // Changed to /companies as per your page structure
+                className={`text-gray-700 font-nav text-[14px] mt-1.5 hover:text-[#4640DE] transition
+                  ${
+                    isActive("/BrowseCompanies")
+                      ? "text-[#4640DE] border-b-2 border-[#4640DE]"
+                      : ""
+                  }
+                `}
               >
                 Browse Companies
               </Link>
@@ -102,14 +125,14 @@ const Header = () => {
           {/* Menu items as per your original design */}
           <nav className="flex flex-col space-y-4 pt-12">
             <Link
-              href="/jobs"
+              href="/FindJobs"
               className="text-gray-700 font-nav hover:text-[#4640DE]"
               onClick={() => setMobileMenuOpen(false)}
             >
               Find Jobs
             </Link>
             <Link
-              href="/companies"
+              href="/BrowseCompanies"
               className="text-gray-700 font-nav hover:text-[#4640DE]"
               onClick={() => setMobileMenuOpen(false)}
             >

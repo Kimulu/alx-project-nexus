@@ -15,7 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="bg-white text-gray-900">
       {showHeader && <Header />} {/* Conditionally render the Header */}
       <main className="w-full">{children}</main>
-      <Footer />
+      {showHeader && <Footer />}
     </div>
   );
 }
