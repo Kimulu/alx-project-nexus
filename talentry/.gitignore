@@ -12,7 +12,7 @@
 
 # testing
 /coverage
-serviceAccontKey.json
+
 
 # next.js
 /.next/
@@ -41,4 +41,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase Service Account Key
+serviceAccountKey.json
+talentry/serviceAccountKey.json # Add this if it's nested in a 'talentry' folder
 
