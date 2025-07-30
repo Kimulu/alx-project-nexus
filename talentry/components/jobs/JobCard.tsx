@@ -1,8 +1,7 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 // Define the props interface for the JobCard component
 interface JobCardProps {
@@ -30,13 +29,14 @@ const JobCard: React.FC<JobCardProps> = ({
 }) => {
   const isCapacityFull = appliedCount >= capacity;
 
-  // Function to generate a random pastel-like color
+  // Function to generate a random pastel-like color for the placeholder
   const getRandomColor = () => {
     const hue = Math.floor(Math.random() * 360);
-    return `hsl(${hue}, 70%, 80%)`; // Light, desaturated colors
+    return `hsl(${hue}, 70%, 80%)`; // Light, desaturated colors for better readability
   };
 
   const placeholderBgColor = getRandomColor();
+  // Get the first letter of the company name, or '?' if companyName is empty
   const companyInitial = companyName
     ? companyName.charAt(0).toUpperCase()
     : "?";
@@ -44,7 +44,7 @@ const JobCard: React.FC<JobCardProps> = ({
   // State to manage if the image has failed to load, triggering the fallback
   const [imageLoadError, setImageLoadError] = useState(false);
 
-  // Reset imageLoadError when companyLogo changes
+  // Reset imageLoadError when companyLogo prop changes
   useEffect(() => {
     setImageLoadError(false);
   }, [companyLogo]);
@@ -52,10 +52,11 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200">
       <div className="flex items-start justify-between mb-4">
-        {/* Company Logo or Placeholder */}
-        <div className="flex items-start">
+        {/* Company Logo or Placeholder and Job Info */}
+        <div className="flex items-start flex-grow min-w-0">
+          {" "}
+          {/* Added flex-grow and min-w-0 */}
           <div className="flex-shrink-0 mr-4 mt-1">
-            {/* Render Image if companyLogo exists AND no load error, otherwise render placeholder */}
             {companyLogo && !imageLoadError ? (
               <Image
                 src={companyLogo}
@@ -63,10 +64,9 @@ const JobCard: React.FC<JobCardProps> = ({
                 width={48}
                 height={48}
                 className="rounded-md object-contain"
-                onError={() => setImageLoadError(true)} // Set error state if image fails to load
+                onError={() => setImageLoadError(true)}
               />
             ) : (
-              // Fallback: First letter of company name with random background
               <div
                 className="w-12 h-12 rounded-md flex items-center justify-center text-white text-xl font-bold"
                 style={{ backgroundColor: placeholderBgColor }}
@@ -75,31 +75,44 @@ const JobCard: React.FC<JobCardProps> = ({
               </div>
             )}
           </div>
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 font-clash leading-tight">
+          <div className="flex-grow min-w-0">
+            {" "}
+            {/* Added flex-grow and min-w-0 */}
+            <h3 className="text-xl font-semibold text-gray-900 font-clash leading-tight truncate">
+              {" "}
+              {/* Added truncate */}
               {jobTitle}
             </h3>
-            <p className="text-gray-600 text-sm font-epilogue mt-1">
+            <p className="text-gray-600 text-sm font-epilogue mt-1 truncate">
+              {" "}
+              {/* Added truncate */}
               {companyName} • {location}
             </p>
           </div>
         </div>
 
-        {/* Apply Button */}
-        <Link href={`/jobs/${id}/apply`}>
-          <button
-            className={`px-6 py-2 rounded-md font-medium text-white transition-colors duration-200
-              ${
-                isCapacityFull
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[#4640DE] hover:bg-blue-700"
-              }
-            `}
-            disabled={isCapacityFull}
-          >
-            {isCapacityFull ? "Full" : "Apply"}
-          </button>
-        </Link>
+        {/* Apply Button Container - Ensure it doesn't shrink */}
+        <div className="flex-shrink-0 ml-4">
+          {" "}
+          {/* Added flex-shrink-0 and ml-4 for spacing */}
+          <Link href={`/jobs/${id}`}>
+            {" "}
+            {/* Changed to /jobs/${id} for consistency with FeaturedJobCard */}
+            <button
+              className={`px-4 py-2 rounded-md font-medium text-white text-sm transition-colors duration-200 whitespace-nowrap
+                ${
+                  isCapacityFull
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#4640DE] hover:bg-blue-700"
+                }
+              `}
+              disabled={isCapacityFull}
+            >
+              {isCapacityFull ? "Full" : "View Details"}{" "}
+              {/* Changed text to View Details */}
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Job Type and Categories */}

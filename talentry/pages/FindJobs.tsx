@@ -1,70 +1,84 @@
-"use client";
+// pages/FindJobs.tsx
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation"; // Import useSearchParams
+import { useRouter } from "next/router"; // Correct hook for Pages Router
 import HeroSection from "@/components/jobs/HeroSection"; // Ensure this path is correct
 import JobFilterAndListings from "@/components/jobs/JobFilterAndListings"; // Ensure this path is correct
 
-const JobsPage = () => {
-  const searchParams = useSearchParams();
+const FindJobsPage: React.FC = () => {
+  const router = useRouter();
 
-  // Get initial query, location, and fetch_all status from URL search parameters
-  const initialUrlQuery = searchParams.get("q") || "";
-  const initialUrlLocation = searchParams.get("loc") || "";
-  const initialFetchAll = searchParams.get("fetch_all") === "true"; // Check for 'fetch_all=true'
+  // State to hold the current search query and location for this page
+  // Initialize from URL query parameters if they exist
+  const [currentSearchQuery, setCurrentSearchQuery] = useState<string>("");
+  const [currentLocation, setCurrentLocation] = useState<string>("");
+  const [shouldFetchAll, setShouldFetchAll] = useState<boolean>(false); // State to control num_pages
 
-  // State to hold the search query and location, initialized from URL params
-  const [currentSearchQuery, setCurrentSearchQuery] = useState(initialUrlQuery);
-  const [currentLocation, setCurrentLocation] = useState(initialUrlLocation);
-  const [shouldFetchAll, setShouldFetchAll] = useState(initialFetchAll); // New state for fetch_all
-
-  // This useEffect will now *only* update the component's internal state
-  // if the URL search parameters *change* after the initial render.
-  // This handles cases like browser back/forward or programmatic URL changes.
+  // Effect to read URL parameters on initial load and when router query changes
   useEffect(() => {
-    const urlQuery = searchParams.get("q") || "";
-    const urlLocation = searchParams.get("loc") || "";
-    const urlFetchAll = searchParams.get("fetch_all") === "true";
+    const { q, loc, fetch_all } = router.query;
 
-    // Only update state if the URL parameters are different from current state
-    if (urlQuery !== currentSearchQuery) {
-      setCurrentSearchQuery(urlQuery);
+    // Set initial search query from 'q' parameter
+    // Only update if the URL param is different to prevent unnecessary re-renders
+    if (typeof q === "string" && q !== currentSearchQuery) {
+      setCurrentSearchQuery(q);
+    } else if (typeof q !== "string" && currentSearchQuery !== "") {
+      // If 'q' is removed from URL
+      setCurrentSearchQuery("");
     }
-    if (urlLocation !== currentLocation) {
-      setCurrentLocation(urlLocation);
-    }
-    if (urlFetchAll !== shouldFetchAll) {
-      // Update shouldFetchAll if URL changes
-      setShouldFetchAll(urlFetchAll);
-    }
-  }, [searchParams, currentSearchQuery, currentLocation, shouldFetchAll]); // Added shouldFetchAll to dependencies
 
-  // This function is passed down to HeroSection.
-  // When HeroSection's search button is clicked, it calls this function
-  // with the latest input values, updating the state here.
-  // We also update the URL here to keep it in sync with the search.
-  const handleSearchSubmit = (query: string, location: string) => {
+    // Set initial location from 'loc' parameter
+    if (typeof loc === "string" && loc !== currentLocation) {
+      setCurrentLocation(loc);
+    } else if (typeof loc !== "string" && currentLocation !== "") {
+      // If 'loc' is removed from URL
+      setCurrentLocation("");
+    }
+
+    // Set shouldFetchAll from 'fetch_all' parameter
+    // Ensure it's a boolean comparison
+    setShouldFetchAll(fetch_all === "true");
+  }, [router.query, currentSearchQuery, currentLocation, shouldFetchAll]); // Depend on router.query and current states
+
+  // Callback function passed to HeroSection
+  const handleHeroSearchSubmit = (query: string, location: string) => {
     setCurrentSearchQuery(query);
     setCurrentLocation(location);
-    setShouldFetchAll(false); // Reset fetch_all if a new search is performed on this page
+    setShouldFetchAll(false); // When a new search is submitted directly on this page, don't force 'fetch_all'
 
     // Update the URL to reflect the new search parameters
-    const newParams = new URLSearchParams();
-    if (query) newParams.set("q", query);
-    if (location) newParams.set("loc", location);
-    // Do not include fetch_all=true if a new search is initiated on the jobs page itself
-    window.history.pushState({}, "", `/jobs?${newParams.toString()}`);
+    const newQueryParams: { [key: string]: string } = {};
+    if (query) newQueryParams.q = query;
+    if (location) newQueryParams.loc = location;
+    // Do NOT include fetch_all=true here, as it's a fresh search from this page.
+    // It will default to num_pages=1 in JobFilterAndListings unless explicitly set.
 
-    console.log(`Search submitted: Query='${query}', Location='${location}'`);
+    router.push(
+      {
+        pathname: "/jobs",
+        query: newQueryParams,
+      },
+      undefined,
+      { shallow: true }
+    ); // shallow: true keeps URL update client-side
   };
 
+  const popularJobSearches = [
+    // Ensure these links point to /jobs and pass fetch_all=true
+    { text: "UI Designer", link: "/jobs?q=UI+Designer&fetch_all=true" },
+    { text: "UX Researcher", link: "/jobs?q=UX+Researcher&fetch_all=true" },
+    { text: "Android", link: "/jobs?q=Android&fetch_all=true" },
+    { text: "Admin", link: "/jobs?q=Admin&fetch_all=true" },
+  ];
+
   return (
-    <div>
-      {/* HeroSection: Displays the search bar and takes user input */}
+    <>
       <HeroSection
         mainTitle={
           <>
             Find your{" "}
             <span className="relative inline-block text-[#26A4FF]">
+              {" "}
+              {/* Changed color to #26A4FF */}
               dream job
               <img
                 src="/underline.png" // Ensure this path is correct
@@ -76,29 +90,23 @@ const JobsPage = () => {
         }
         subTitle="Find your next career at companies like HubSpot, Nike, and Dropbox."
         searchPlaceholder="Job title or keyword"
-        locationDefaultValue="Florence, Italy" // This is for the dropdown's initial display
-        searchButtonText="Search"
-        popularSearches={[
-          { text: "UI Designer", link: "/FindJobs?q=UI+Designer" },
-          { text: "UX Researcher", link: "/FindJobs?q=UX+Researcher" },
-          { text: "Android", link: "/FindJobs?q=Android" },
-          { text: "Admin", link: "/FindJobs?q=Admin" },
-        ]}
+        locationDefaultValue="Select a Region" // This is for the dropdown's initial display
+        searchButtonText="Search my job"
+        popularSearches={popularJobSearches}
         searchType="job"
-        onSearchSubmit={handleSearchSubmit}
+        onSearchSubmit={handleHeroSearchSubmit}
         // Pass current state as initial value to keep inputs in sync
         initialSearchQuery={currentSearchQuery}
         initialLocation={currentLocation}
       />
 
-      {/* JobFilterAndListings: Fetches and displays jobs based on the search state */}
       <JobFilterAndListings
-        searchQuery={currentSearchQuery} // Pass current search state as props
+        searchQuery={currentSearchQuery}
         location={currentLocation}
-        shouldFetchAll={shouldFetchAll} // <--- NEW: Pass the shouldFetchAll prop
+        shouldFetchAll={shouldFetchAll}
       />
-    </div>
+    </>
   );
 };
 
-export default JobsPage;
+export default FindJobsPage;

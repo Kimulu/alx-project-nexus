@@ -18,8 +18,8 @@ const HomePageSearchResults = () => {
   }
 
   return (
-    <section className="bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-20 md:py-14">
+    <section className="bg-white pt-12 px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         <h2 className="text-3xl font-bold font-clash mb-8 text-center">
           Search Results for "{searchQuery || "All Jobs"}"{" "}
           {location && `in ${location}`}

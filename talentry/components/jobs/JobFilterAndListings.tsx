@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react"; // Added useMemo
 import { ChevronUp, ChevronDown, LayoutGrid, Rows } from "lucide-react";
 import JobCard from "./JobCard";
 
@@ -10,10 +10,26 @@ interface JobFilterAndListingsProps {
   shouldFetchAll: boolean; // Prop to indicate if all available results should be fetched
 }
 
+// Define the Job interface to explicitly type the job objects
+interface Job {
+  id: string;
+  companyLogo: string | null;
+  jobTitle: string;
+  companyName: string;
+  location: string;
+  jobType: string;
+  categories: string[];
+  appliedCount: number;
+  capacity: number;
+  job_posted_at_timestamp?: number; // Optional, as it might not always be present
+  job_salary_min?: number; // Optional
+  job_salary_max?: number; // Optional
+}
+
 const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
   searchQuery,
   location,
-  shouldFetchAll, // Destructure the prop
+  shouldFetchAll,
 }) => {
   const [openFilters, setOpenFilters] = useState({
     employmentType: true,
@@ -24,44 +40,58 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
   const [sortBy, setSortBy] = useState("Most relevant");
   const [isGridView, setIsGridView] = useState(true);
 
-  // States for API data
-  const [jobs, setJobs] = useState([]);
+  // States for selected filters
+  const [selectedEmploymentTypes, setSelectedEmploymentTypes] = useState<
+    Set<string>
+  >(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
+    new Set()
+  );
+  const [selectedJobLevels, setSelectedJobLevels] = useState<Set<string>>(
+    new Set()
+  );
+  const [selectedSalaryRanges, setSelectedSalaryRanges] = useState<Set<string>>(
+    new Set()
+  );
+
+  // States for API data - Explicitly type 'jobs' as an array of 'Job'
+  const [jobs, setJobs] = useState<Job[]>([]); // MODIFIED: Added Job[] type
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter options (static for now)
+  // Filter options with values mapped to JSearch API parameters
   const employmentTypes = [
-    { label: "Full-time" },
-    { label: "Part-Time" },
-    { label: "Remote" },
-    { label: "Internship" },
-    { label: "Contract" },
+    { label: "Full-time", value: "FULLTIME" },
+    { label: "Part-Time", value: "PARTTIME" },
+    { label: "Remote", value: "REMOTE" },
+    { label: "Internship", value: "INTERNSHIP" },
+    { label: "Contract", value: "CONTRACT" },
   ];
 
   const categories = [
-    { label: "Design" },
-    { label: "Sales" },
-    { label: "Marketing" },
-    { label: "Business" },
-    { label: "Human Resource" },
-    { label: "Finance" },
-    { label: "Engineering" },
-    { label: "Technology" },
+    { label: "Design", value: "Design" },
+    { label: "Sales", value: "Sales" },
+    { label: "Marketing", value: "Marketing" },
+    { label: "Business", value: "Business" },
+    { label: "Human Resource", value: "Human Resource" },
+    { label: "Finance", value: "Finance" },
+    { label: "Engineering", value: "Engineering" },
+    { label: "Technology", value: "Technology" },
   ];
 
   const jobLevels = [
-    { label: "Entry Level" },
-    { label: "Mid Level" },
-    { label: "Senior Level" },
-    { label: "Director" },
-    { label: "VP or Above" },
+    { label: "Entry Level", value: "entry_level" },
+    { label: "Mid Level", value: "mid_level" },
+    { label: "Senior Level", value: "senior_level" },
+    { label: "Director", value: "director" },
+    { label: "VP or Above", value: "vp_and_above" },
   ];
 
   const salaryRanges = [
-    { label: "$700 - $1000" },
-    { label: "$100 - $1500" },
-    { label: "$1500 - $2000" },
-    { label: "$3000 or above" },
+    { label: "$700 - $1000", min: 700, max: 1000 },
+    { label: "$1000 - $1500", min: 1000, max: 1500 },
+    { label: "$1500 - $2000", min: 1500, max: 2000 },
+    { label: "$3000 or above", min: 3000, max: null }, // max is null for "or above"
   ];
 
   useEffect(() => {
@@ -71,13 +101,10 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
       try {
         const params = new URLSearchParams();
 
-        // Pass searchQuery and location as SEPARATE parameters to your /api/jobs endpoint.
-        // The /api/jobs endpoint is responsible for combining them for JSearch and caching.
+        // Base query
         if (searchQuery) {
           params.append("query", searchQuery);
         } else {
-          // If searchQuery is empty, provide a default for the API route
-          // This ensures the API route always receives a 'query' parameter.
           params.append("query", "jobs");
         }
 
@@ -85,9 +112,58 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           params.append("location", location);
         }
 
-        // Adjust num_pages based on shouldFetchAll prop
-        params.append("num_pages", shouldFetchAll ? "5" : "1"); // Fetch 5 pages if 'fetch_all' is true, else 1
-        params.append("page", "1"); // Always start from page 1 for new searches
+        params.append("num_pages", shouldFetchAll ? "5" : "1");
+        params.append("page", "1");
+
+        // Append selected filters to URL parameters
+        if (selectedEmploymentTypes.size > 0) {
+          params.append(
+            "employment_types",
+            Array.from(selectedEmploymentTypes).join(",")
+          );
+        }
+        if (selectedCategories.size > 0) {
+          params.append("job_category", Array.from(selectedCategories)[0]);
+        }
+        if (selectedJobLevels.size > 0) {
+          params.append(
+            "job_requirements",
+            Array.from(selectedJobLevels).join(",")
+          );
+        }
+        if (selectedSalaryRanges.size > 0) {
+          let minSalary: number | undefined; // Changed to undefined
+          let maxSalary: number | undefined; // Changed to undefined
+
+          Array.from(selectedSalaryRanges).forEach((rangeLabel) => {
+            const range = salaryRanges.find((s) => s.label === rangeLabel);
+            if (range) {
+              if (range.min !== null && range.min !== undefined) {
+                // Check for undefined as well
+                minSalary =
+                  minSalary === undefined
+                    ? range.min
+                    : Math.min(minSalary, range.min);
+              }
+              if (range.max !== null && range.max !== undefined) {
+                // Check for undefined as well
+                maxSalary =
+                  maxSalary === undefined
+                    ? range.max
+                    : Math.max(maxSalary, range.max);
+              }
+            }
+          });
+
+          if (minSalary !== undefined) {
+            // Check for undefined
+            params.append("salary_min", minSalary.toString()); // No more ! needed, type is number
+          }
+          if (maxSalary !== undefined) {
+            // Check for undefined
+            params.append("salary_max", maxSalary.toString()); // No more ! needed, type is number
+          }
+        }
 
         const response = await fetch(`/api/jobs?${params.toString()}`);
         if (!response.ok) {
@@ -96,7 +172,8 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         }
         const data = await response.json();
 
-        const mappedJobs = data.data.map((job: any) => {
+        const mappedJobs: Job[] = data.data.map((job: any) => {
+          // MODIFIED: Explicitly typed mappedJobs
           const jobType =
             job.job_employment_type_text ||
             (job.job_employment_type
@@ -120,6 +197,8 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
             jobLocation = "Remote";
           }
 
+          const jobPostedAtTimestamp = job.job_posted_at_timestamp;
+
           return {
             id: job.job_id,
             companyLogo: job.employer_logo,
@@ -130,34 +209,109 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
             categories: jobCategories,
             appliedCount: Math.floor(Math.random() * 20),
             capacity: Math.floor(Math.random() * 20) + 10,
+            job_posted_at_timestamp: jobPostedAtTimestamp,
+            job_salary_min: job.job_salary_min,
+            job_salary_max: job.job_salary_max,
           };
         });
         setJobs(mappedJobs);
       } catch (err: any) {
         setError(err.message);
-        console.error("Error fetching jobs:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    // This useEffect will re-run whenever searchQuery, location, or shouldFetchAll changes
     fetchJobs();
-  }, [searchQuery, location, shouldFetchAll]);
+  }, [
+    searchQuery,
+    location,
+    shouldFetchAll,
+    selectedEmploymentTypes,
+    selectedCategories,
+    selectedJobLevels,
+    selectedSalaryRanges,
+  ]);
+
+  // Client-side sorting
+  const sortedJobs = useMemo(() => {
+    let sortableJobs = [...jobs];
+    switch (sortBy) {
+      case "Newest":
+        sortableJobs.sort(
+          (a, b) =>
+            (b.job_posted_at_timestamp || 0) - (a.job_posted_at_timestamp || 0)
+        );
+        break;
+      case "Oldest":
+        sortableJobs.sort(
+          (a, b) =>
+            (a.job_posted_at_timestamp || 0) - (b.job_posted_at_timestamp || 0)
+        );
+        break;
+      case "Salary (low to high)":
+        sortableJobs.sort(
+          (a, b) => (a.job_salary_min || 0) - (b.job_salary_min || 0)
+        );
+        break;
+      case "Salary (high to low)":
+        sortableJobs.sort(
+          (a, b) => (b.job_salary_min || 0) - (a.job_salary_min || 0)
+        );
+        break;
+      case "Most relevant":
+      default:
+        break;
+    }
+    return sortableJobs;
+  }, [jobs, sortBy]);
 
   const toggleFilter = (filterName: keyof typeof openFilters) => {
     setOpenFilters((prev) => ({ ...prev, [filterName]: !prev[filterName] }));
   };
 
-  const handleCheckboxChange = (filterType: string, label: string) => {
-    console.log(`Filter ${filterType}: ${label}`);
+  const handleCheckboxChange = (
+    filterType: string,
+    value: string,
+    isChecked: boolean
+  ) => {
+    const updateSet = (prevSet: Set<string>) => {
+      const newSet = new Set(prevSet);
+      if (isChecked) {
+        newSet.add(value);
+      } else {
+        newSet.delete(value);
+      }
+      return newSet;
+    };
+
+    switch (filterType) {
+      case "employmentType":
+        setSelectedEmploymentTypes(updateSet);
+        break;
+      case "categories":
+        setSelectedCategories(updateSet);
+        break;
+      case "jobLevel":
+        setSelectedJobLevels(updateSet);
+        break;
+      case "salaryRange":
+        setSelectedSalaryRanges(updateSet);
+        break;
+      default:
+        break;
+    }
   };
+
+  const displayTitle = searchQuery
+    ? `Jobs for "${searchQuery}"${location ? ` in ${location}` : ""}`
+    : `All Jobs${location ? ` in ${location}` : ""}`;
 
   return (
     <section className="bg-white py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Sidebar - Filters */}
-        <aside className="lg:col-span-1 bg-gray-50 p-6 rounded-lg shadow-sm h-fit sticky top-24">
+        <aside className="lg:col-span-1 bg-gray-50 p-6 rounded-lg shadow-sm h-fit lg:sticky lg:top-24">
           {/* Type of Employment */}
           <div className="mb-8">
             <div
@@ -183,8 +337,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-[#4640DE] rounded focus:ring-[#4640DE]"
-                      onChange={() =>
-                        handleCheckboxChange("employmentType", type.label)
+                      checked={selectedEmploymentTypes.has(type.value)}
+                      onChange={(e) =>
+                        handleCheckboxChange(
+                          "employmentType",
+                          type.value,
+                          e.target.checked
+                        )
                       }
                     />
                     <span className="ml-2">{type.label}</span>{" "}
@@ -219,8 +378,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-[#4640DE] rounded focus:ring-[#4640DE]"
-                      onChange={() =>
-                        handleCheckboxChange("categories", cat.label)
+                      checked={selectedCategories.has(cat.value)}
+                      onChange={(e) =>
+                        handleCheckboxChange(
+                          "categories",
+                          cat.value,
+                          e.target.checked
+                        )
                       }
                     />
                     <span className="ml-2">{cat.label}</span>{" "}
@@ -253,8 +417,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-[#4640DE] rounded focus:ring-[#4640DE]"
-                      onChange={() =>
-                        handleCheckboxChange("jobLevel", level.label)
+                      checked={selectedJobLevels.has(level.value)}
+                      onChange={(e) =>
+                        handleCheckboxChange(
+                          "jobLevel",
+                          level.value,
+                          e.target.checked
+                        )
                       }
                     />
                     <span className="ml-2">{level.label}</span>{" "}
@@ -289,8 +458,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-[#4640DE] rounded focus:ring-[#4640DE]"
-                      onChange={() =>
-                        handleCheckboxChange("salaryRange", range.label)
+                      checked={selectedSalaryRanges.has(range.label)} // Use label for checking, value for API
+                      onChange={(e) =>
+                        handleCheckboxChange(
+                          "salaryRange",
+                          range.label,
+                          e.target.checked
+                        )
                       }
                     />
                     <span className="ml-2">{range.label}</span>{" "}
@@ -307,10 +481,10 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-gray-50 p-4 rounded-lg shadow-sm">
             <div className="flex items-center mb-4 sm:mb-0">
               <h2 className="text-xl font-semibold text-gray-900 mr-2">
-                All Jobs
+                {displayTitle}
               </h2>
               <span className="text-gray-600">
-                Showing {jobs.length} results
+                Showing {sortedJobs.length} results
               </span>
             </div>
             <div className="flex items-center space-x-4">
@@ -366,7 +540,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
             </div>
           ) : error ? (
             <div className="text-center py-10 text-red-600">Error: {error}</div>
-          ) : jobs.length === 0 ? (
+          ) : sortedJobs.length === 0 ? (
             <div className="text-center py-10 text-gray-600">
               No jobs found for your search.
             </div>
@@ -376,7 +550,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                 isGridView ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
               }`}
             >
-              {jobs.map((job: any) => (
+              {sortedJobs.map((job: any) => (
                 <JobCard key={job.id} {...job} />
               ))}
             </div>

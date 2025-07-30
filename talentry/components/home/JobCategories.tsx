@@ -22,56 +22,57 @@ const categories = [
     icon: Palette,
     title: "Design",
     jobCount: 235,
-    link: "/jobs?category=design",
+    // Updated link: pass 'q' with category title and 'fetch_all=true'
+    link: "/FindJobs?q=Design&fetch_all=true",
     isFeatured: false,
   },
   {
     icon: LineChart,
     title: "Sales",
     jobCount: 756,
-    link: "/jobs?category=sales",
+    link: "/FindJobs?q=Sales&fetch_all=true",
     isFeatured: false,
   },
   {
     icon: Megaphone,
     title: "Marketing",
     jobCount: 140,
-    link: "/jobs?category=marketing",
+    link: "/FindJobs?q=Marketing&fetch_all=true",
     isFeatured: true, // This is the highlighted card
   },
   {
     icon: PiggyBank,
     title: "Finance",
     jobCount: 325,
-    link: "/jobs?category=finance",
+    link: "/FindJobs?q=Finance&fetch_all=true",
     isFeatured: false,
   },
   {
     icon: Monitor,
     title: "Technology",
     jobCount: 436,
-    link: "/jobs?category=technology",
+    link: "/FindJobs?q=Technology&fetch_all=true",
     isFeatured: false,
   },
   {
     icon: Code,
     title: "Engineering",
     jobCount: 542,
-    link: "/jobs?category=engineering",
+    link: "/FindJobs?q=Engineering&fetch_all=true",
     isFeatured: false,
   },
   {
     icon: Briefcase,
     title: "Business",
     jobCount: 211,
-    link: "/jobs?category=business",
+    link: "/FindJobs?q=Business&fetch_all=true",
     isFeatured: false,
   },
   {
     icon: Users,
     title: "Human Resource",
     jobCount: 346,
-    link: "/jobs?category=human-resource",
+    link: "/FindJobs?q=Human+Resource&fetch_all=true", // Use '+' for space in URL query
     isFeatured: false,
   },
 ];
@@ -92,7 +93,7 @@ const JobCategories = () => {
             Explore by <span className="text-[#4640DE]">category</span>
           </h2>
           <Link
-            href="/jobs"
+            href="/FindJobs"
             className="flex items-center text-[#4640DE] hover:text-blue-700 font-medium transition-colors duration-200"
           >
             Show all jobs <ArrowRight className="ml-2 w-4 h-4" />
@@ -115,7 +116,7 @@ const JobCategories = () => {
                 className="group" // Add group class to enable group-hover utilities
               >
                 <Link
-                  href={category.link}
+                  href={category.link} // Use the updated link with query params
                   className={`
                     block p-6 rounded-lg shadow-sm transition-all duration-300 ease-in-out
                     ${

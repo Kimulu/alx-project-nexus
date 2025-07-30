@@ -9,13 +9,14 @@ import React, {
 
 // Define the shape of your job data (matching JobCardProps, but potentially more from API)
 interface Job {
-  id: string;
-  companyLogo: string | null;
+  id: string; // Unique ID for the job
+  companyLogo: string | null; // URL or path to the company logo (can be null)
   jobTitle: string;
   companyName: string;
   location: string;
-  jobType: string;
-  categories: string[];
+  jobType: string; // e.g., "Full-Time", "Part-Time"
+  jobDescription: string; // ADDED: New field for job description
+  categories: string[]; // e.g., ["Marketing", "Design"]
   appliedCount: number;
   capacity: number;
   // Add other fields you might need for job details or filtering
@@ -97,6 +98,7 @@ export const JobsProvider: React.FC<JobsProviderProps> = ({ children }) => {
               ? job.job_employment_type.charAt(0).toUpperCase() +
                 job.job_employment_type.slice(1).toLowerCase()
               : "Full-Time"),
+          jobDescription: job.job_description || "No description available.", // ADDED: Map job_description
           categories: job.job_category ? [job.job_category] : [],
           appliedCount: Math.floor(Math.random() * 20),
           capacity: Math.floor(Math.random() * 20) + 10,
@@ -167,6 +169,7 @@ export const JobsProvider: React.FC<JobsProviderProps> = ({ children }) => {
               ? job.job_employment_type.charAt(0).toUpperCase() +
                 job.job_employment_type.slice(1).toLowerCase()
               : "Full-Time"),
+          jobDescription: job.job_description || "No description available.", // ADDED: Map job_description
           categories: job.job_category ? [job.job_category] : [],
           appliedCount: Math.floor(Math.random() * 20),
           capacity: Math.floor(Math.random() * 20) + 10,
