@@ -8,8 +8,8 @@ import {
   query,
   where,
   getDocs,
-  limit,
   orderBy,
+  limit,
   Firestore,
 } from "firebase/firestore";
 
@@ -55,12 +55,6 @@ if (!firebaseConfig.projectId) {
 
 // Get the Canvas application ID. This is used to create unique Firestore collection paths.
 const appId = typeof __app_id !== "undefined" ? __app_id : "default-app-id";
-
-// --- TEMPORARY: Log the APP_ID to the console for you to retrieve ---
-console.log("--- CANVAS APP ID (FOR PYTHON SCRIPT) ---");
-console.log("Your __app_id is:", appId);
-console.log("-----------------------------------------");
-// --- END TEMPORARY LOG ---
 
 let app: FirebaseApp | null; // Firebase app instance
 let db: Firestore | null; // Firestore database instance
@@ -117,115 +111,138 @@ export default async function handler(
   }
 
   const {
-    query: searchQueryParam, // Renamed to avoid conflict with Firestore 'query' object
+    query: searchQueryParam,
     location,
     page = "1",
     num_pages = "1",
     employment_types,
     job_category,
-    job_requirements, // This will be handled client-side due to Firestore limitations
+    job_requirements,
     salary_min,
     salary_max,
   } = req.query;
 
   try {
     // Reference to the 'jobs' collection in Firestore
-    // The path uses `appId` to ensure data is scoped to your Canvas application.
     const jobsCollectionRef = collection(
       db,
       `artifacts/${appId}/public/data/jobs`
     );
-    let q = query(jobsCollectionRef); // Start building the Firestore query
 
-    // Apply filters based on query parameters using Firestore's `where` clauses
-    // Note: Firestore queries require indexes for most `where` and `orderBy` combinations.
-    // If you get errors about missing indexes, Firebase Console will provide a link to create them.
-
-    // Filter by employment_types (e.g., FULLTIME, PARTTIME)
-    if (employment_types && typeof employment_types === "string") {
-      const typesArray = employment_types.toUpperCase().split(",");
-      // Use 'in' operator for multiple values. Firestore 'in' supports up to 10 values.
-      if (typesArray.length > 0) {
-        q = query(q, where("job_employment_type", "in", typesArray));
-      }
-    }
-
-    // Filter by job_category
-    if (job_category && typeof job_category === "string") {
-      q = query(q, where("job_category", "==", job_category));
-    }
-
-    // Filter by salary range (min and max)
-    // Note: If both salary_min and salary_max are used, ensure you have a composite index.
-    if (salary_min && typeof salary_min === "string") {
-      q = query(q, where("job_salary_min", ">=", parseFloat(salary_min)));
-    }
-    if (salary_max && typeof salary_max === "string") {
-      q = query(q, where("job_salary_max", "<=", parseFloat(salary_max)));
-    }
-
-    // Order the results. This is crucial for consistent pagination and sorting.
-    // We order by 'job_posted_at_timestamp' in descending order (newest first).
-    q = query(q, orderBy("job_posted_at_timestamp", "desc")); // Default order
-
-    // Implement pagination logic
-    const pageNum = parseInt(page as string);
-    const numPagesToFetch = parseInt(num_pages as string);
-    const itemsPerPage = 10; // Define how many items per 'page' you want to fetch from Firestore
-    const totalLimit = itemsPerPage * numPagesToFetch; // Total number of items to fetch for the requested pages
-
-    q = query(q, limit(totalLimit)); // Apply the limit to the query
-
-    // Execute the Firestore query
-    const querySnapshot = await getDocs(q);
     let jobsData: any[] = [];
-    // Iterate over the documents in the snapshot and add them to the jobsData array
-    querySnapshot.forEach((doc) => {
-      jobsData.push({ id: doc.id, ...doc.data() });
-    });
 
-    // --- Client-side filtering for fields not directly queryable by Firestore ---
-    // Firestore does not support full-text search or complex 'OR' conditions across different fields directly.
-    // Therefore, we perform client-side filtering for 'query' (job title, company name, description)
-    // and 'location' (city, state, country, remote status).
+    // Determine if a specific search (query OR location) is active.
+    // If searchQueryParam is 'all' or empty AND location is empty, it's an "initial load" scenario.
+    const isSpecificSearch =
+      (searchQueryParam &&
+        (searchQueryParam as string).toLowerCase() !== "all") ||
+      (location && (location as string).toLowerCase() !== "all");
+
+    if (!isSpecificSearch) {
+      // Scenario 1: No specific search query or location provided (e.g., initial homepage load)
+      // Fetch all jobs directly from Firestore, ordered by timestamp.
+      const initialFirestoreQuery = query(
+        jobsCollectionRef, // Start with the collection ref
+        orderBy("job_posted_at_timestamp", "desc") // Order by newest first
+        // limit(totalLimit) // This line was removed to fetch all jobs
+      );
+      const querySnapshot = await getDocs(initialFirestoreQuery);
+      querySnapshot.forEach((doc) => {
+        jobsData.push({ id: doc.id, ...doc.data() });
+      });
+    } else {
+      // Scenario 2: A specific search query OR location is provided.
+      // Fetch ALL documents for comprehensive client-side regex filtering.
+      const querySnapshot = await getDocs(jobsCollectionRef); // Fetch all documents
+      querySnapshot.forEach((doc) => {
+        jobsData.push({ id: doc.id, ...doc.data() });
+      });
+    }
+
     let filteredJobs = jobsData;
 
-    // Filter by general search query (job title, company name, description)
+    // --- Apply Regex-like Filtering (Client-side in API route) ---
+
+    // 1. Filter by general search query (job_title, employer_name, job_description) using Regex
+    // This now ONLY applies if a specific searchQueryParam is present and not 'all'.
     if (
       searchQueryParam &&
       typeof searchQueryParam === "string" &&
-      searchQueryParam.toLowerCase() !== "jobs"
+      (searchQueryParam as string).toLowerCase() !== "all"
     ) {
-      const lowerCaseQuery = searchQueryParam.toLowerCase();
-      filteredJobs = filteredJobs.filter(
-        (job) =>
-          (job.job_title &&
-            job.job_title.toLowerCase().includes(lowerCaseQuery)) ||
-          (job.employer_name &&
-            job.employer_name.toLowerCase().includes(lowerCaseQuery)) ||
-          (job.job_description &&
-            job.job_description.toLowerCase().includes(lowerCaseQuery))
+      const lowerCaseQuery = (searchQueryParam as string).toLowerCase();
+      try {
+        const regex = new RegExp(lowerCaseQuery, "i"); // 'i' for case-insensitive
+        filteredJobs = filteredJobs.filter(
+          (job) =>
+            (job.job_title && regex.test(job.job_title.toLowerCase())) ||
+            (job.employer_name &&
+              regex.test(job.employer_name.toLowerCase())) ||
+            (job.job_description &&
+              regex.test(job.job_description.toLowerCase()))
+        );
+      } catch (e) {
+        console.error("Invalid regex in search query:", e);
+        // Optionally, handle as an error or fall back to a non-regex search
+      }
+    }
+
+    // 2. Filter by location (job_country or job_is_remote) using Regex
+    // This now applies if 'location' is provided, regardless of searchQueryParam.
+    if (location && typeof location === "string") {
+      const lowerCaseLocationInput = (location as string).toLowerCase();
+      try {
+        const regex = new RegExp(lowerCaseLocationInput, "i"); // 'i' for case-insensitive
+        filteredJobs = filteredJobs.filter((job) => {
+          const countryMatch =
+            job.job_country && regex.test(job.job_country.toLowerCase());
+          const remoteMatch =
+            job.job_is_remote && lowerCaseLocationInput === "remote"; // Exact match for 'remote'
+
+          return countryMatch || remoteMatch;
+        });
+      } catch (e) {
+        console.error("Invalid regex in location query:", e);
+        // Optionally, handle as an error or fall back
+      }
+    }
+
+    // 3. Apply other filters (employment_types, job_category, job_requirements, salary)
+    // These are applied AFTER the primary search/location filters.
+
+    // Filter by employment_types
+    if (employment_types && typeof employment_types === "string") {
+      const typesArray = employment_types.toUpperCase().split(",");
+      filteredJobs = filteredJobs.filter((job) =>
+        typesArray.includes(job.job_employment_type)
       );
     }
 
-    // Filter by location
-    if (location && typeof location === "string") {
-      const lowerCaseLocation = location.toLowerCase();
+    // Filter by job_category (if not already handled by searchQueryParam)
+    if (job_category && typeof job_category === "string") {
+      const lowerCaseCategory = job_category.toLowerCase();
       filteredJobs = filteredJobs.filter(
         (job) =>
-          (job.job_city &&
-            job.job_city.toLowerCase().includes(lowerCaseLocation)) ||
-          (job.job_state &&
-            job.job_state.toLowerCase().includes(lowerCaseLocation)) ||
-          (job.job_country &&
-            job.job_country.toLowerCase().includes(lowerCaseLocation)) ||
-          (job.job_is_remote && lowerCaseLocation === "remote")
+          job.job_category &&
+          job.job_category.toLowerCase() === lowerCaseCategory
+      );
+    }
+
+    // Filter by salary range
+    if (salary_min && typeof salary_min === "string") {
+      const minSalary = parseFloat(salary_min);
+      filteredJobs = filteredJobs.filter(
+        (job) => job.job_salary_min >= minSalary
+      );
+    }
+    if (salary_max && typeof salary_max === "string") {
+      const maxSalary = parseFloat(salary_max);
+      filteredJobs = filteredJobs.filter(
+        (job) => job.job_salary_max <= maxSalary
       );
     }
 
     // Filter by job_requirements (job level)
-    // This assumes job.job_highlights.Qualifications or Responsibilities contain keywords like "entry_level"
-    // If your Firestore document has a dedicated 'job_level' field, you could use a `where` clause above.
     if (job_requirements && typeof job_requirements === "string") {
       const requirementsArray = job_requirements.toLowerCase().split(",");
       filteredJobs = filteredJobs.filter(
@@ -239,15 +256,31 @@ export default async function handler(
       );
     }
 
+    // Sort the results (client-side) if a specific order is needed after all filtering
+    // Default to newest first if no specific sort order is requested from frontend
+    filteredJobs.sort(
+      (a, b) =>
+        (b.job_posted_at_timestamp || 0) - (a.job_posted_at_timestamp || 0)
+    );
+
+    // MODIFIED: Conditional pagination
+    let jobsToSend = filteredJobs;
+    if (isSpecificSearch) {
+      // Only paginate if it's a specific search
+      const startIndex = (parseInt(page as string) - 1) * 10; // Assuming 10 items per page
+      const endIndex = startIndex + parseInt(num_pages as string) * 10;
+      jobsToSend = filteredJobs.slice(startIndex, endIndex);
+    }
+
     // Send the filtered job data as a JSON response
     return res.status(200).json({
       status: "success",
-      request_id: "firestore-request-" + Date.now(), // Unique request ID
-      parameters: req.query, // Echo back the parameters for debugging
-      data: filteredJobs, // The array of filtered job objects
+      request_id: "firestore-request-" + Date.now(),
+      parameters: req.query,
+      data: jobsToSend, // Return all filtered jobs if not a specific search, else paginated
+      total_results: filteredJobs.length, // Total results before pagination
     });
   } catch (error) {
-    // Log and return an error response if anything goes wrong during the Firestore operation
     console.error("Error fetching jobs from Firestore:", error);
     return res.status(500).json({
       error: "Internal server error while fetching jobs from database.",

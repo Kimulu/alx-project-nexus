@@ -23,56 +23,56 @@ const categories = [
     title: "Design",
     jobCount: 235,
     // Updated link: pass 'q' with category title and 'fetch_all=true'
-    link: "/FindJobs?q=Design&fetch_all=true",
+    link: "/FindJobs?q=Design",
     isFeatured: false,
   },
   {
     icon: LineChart,
     title: "Sales",
     jobCount: 756,
-    link: "/FindJobs?q=Sales&fetch_all=true",
+    link: "/FindJobs?q=Sales",
     isFeatured: false,
   },
   {
     icon: Megaphone,
     title: "Marketing",
     jobCount: 140,
-    link: "/FindJobs?q=Marketing&fetch_all=true",
+    link: "/FindJobs?q=Marketing",
     isFeatured: true, // This is the highlighted card
   },
   {
     icon: PiggyBank,
     title: "Finance",
     jobCount: 325,
-    link: "/FindJobs?q=Finance&fetch_all=true",
+    link: "/FindJobs?q=Finance",
     isFeatured: false,
   },
   {
     icon: Monitor,
     title: "Technology",
     jobCount: 436,
-    link: "/FindJobs?q=Technology&fetch_all=true",
+    link: "/FindJobs?q=Technology",
     isFeatured: false,
   },
   {
     icon: Code,
     title: "Engineering",
     jobCount: 542,
-    link: "/FindJobs?q=Engineering&fetch_all=true",
+    link: "/FindJobs?q=Engineering",
     isFeatured: false,
   },
   {
     icon: Briefcase,
     title: "Business",
     jobCount: 211,
-    link: "/FindJobs?q=Business&fetch_all=true",
+    link: "/FindJobs?q=Business",
     isFeatured: false,
   },
   {
     icon: Users,
     title: "Human Resource",
     jobCount: 346,
-    link: "/FindJobs?q=Human+Resource&fetch_all=true", // Use '+' for space in URL query
+    link: "/FindJobs?q=HR", // Use '+' for space in URL query
     isFeatured: false,
   },
 ];

@@ -23,7 +23,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   mainTitle,
   subTitle,
   searchPlaceholder,
-  locationDefaultValue = "Select a Region",
+  locationDefaultValue = "Florence, Italy",
   searchButtonText,
   popularSearches,
   searchType,
@@ -65,7 +65,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     <section className="bg-[#F8F8FD] py-16 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl text-center">
         {/* Main Heading */}
-        <h1 className="text-[42px] sm:text-[52px] md:text-[50px] lg:text-[70px] leading-[1.1] font-clash text-gray-900 mb-4 mt-6">
+        <h1 className="text-[42px] sm:text-[52px] md:text-[50px] lg:text-[70px] leading-[1.1] font-clash text-gray-900 mb-4">
           {mainTitle}
         </h1>
 
@@ -89,7 +89,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             />
           </div>
 
-          {/* Location Dropdown */}
+          {/* Location Dropdown - UPDATED OPTIONS TO SEND SIMPLIFIED COUNTRY NAMES */}
           <div className="relative flex items-center flex-grow px-4 py-2 w-full md:w-auto md:border-l border-gray-200 mt-4 md:mt-0">
             <MapPin className="h-5 w-5 text-gray-400 mr-2" />
             <select
@@ -99,18 +99,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               onKeyPress={handleKeyPress} // Added for Enter key submission
             >
               <option value="" disabled hidden>
-                {locationDefaultValue}
+                Select a Region
               </option>
-              {/* Added common locations. You can expand this list. */}
-              <option value="Florence, Italy">Florence, Italy</option>
-              <option value="London, UK">London, UK</option>
-              <option value="New York, USA">New York, USA</option>
-              <option value="Chicago, IL">Chicago, IL</option>
-              <option value="Paris, France">Paris, France</option>
-              <option value="Berlin, Germany">Berlin, Germany</option>
-              <option value="Madrid, Spain">Madrid, Spain</option>
-              <option value="Ankara, Turkey">Ankara, Turkey</option>
-              <option value="San Francisco, USA">San Francisco, USA</option>
+              <option value="Remote">Remote</option>
+              <option value="US">USA</option>
+              <option value="UK">UK</option>
+              <option value="Kenya">Kenya</option>
+              <option value="Germany">Germany</option>
+              <option value="Nigeria">Nigeria</option>
+              <option value="Uganda">Uganda</option>
+              <option value="SouthAfrica">South Africa</option>
+              <option value="France">France</option>
+              <option value="Spain">Spain</option>
+              <option value="Italy">Italy</option>
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
           </div>

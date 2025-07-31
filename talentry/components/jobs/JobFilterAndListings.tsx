@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react"; // Added useMemo
+import React, { useState, useEffect, useMemo } from "react";
 import { ChevronUp, ChevronDown, LayoutGrid, Rows } from "lucide-react";
 import JobCard from "./JobCard";
 
@@ -24,6 +24,11 @@ interface Job {
   job_posted_at_timestamp?: number; // Optional, as it might not always be present
   job_salary_min?: number; // Optional
   job_salary_max?: number; // Optional
+  // Raw JSearch fields are no longer strictly needed for client-side filtering,
+  // but keeping them in the Job interface for completeness if you use them elsewhere.
+  job_employment_type?: string;
+  job_category?: string;
+  job_requirements?: string[];
 }
 
 const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
@@ -55,7 +60,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
   );
 
   // States for API data - Explicitly type 'jobs' as an array of 'Job'
-  const [jobs, setJobs] = useState<Job[]>([]); // MODIFIED: Added Job[] type
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,7 +110,9 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         if (searchQuery) {
           params.append("query", searchQuery);
         } else {
-          params.append("query", "jobs");
+          // If no specific search query, default to "all" to get a broad set of jobs
+          // This ensures the page is not blank on direct navigation.
+          params.append("query", "all");
         }
 
         if (location) {
@@ -115,7 +122,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         params.append("num_pages", shouldFetchAll ? "5" : "1");
         params.append("page", "1");
 
-        // Append selected filters to URL parameters
+        // Append selected filters to URL parameters for API-side filtering
         if (selectedEmploymentTypes.size > 0) {
           params.append(
             "employment_types",
@@ -123,6 +130,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           );
         }
         if (selectedCategories.size > 0) {
+          // JSearch typically expects a single category, so we'll send the first selected one
           params.append("job_category", Array.from(selectedCategories)[0]);
         }
         if (selectedJobLevels.size > 0) {
@@ -132,21 +140,20 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           );
         }
         if (selectedSalaryRanges.size > 0) {
-          let minSalary: number | undefined; // Changed to undefined
-          let maxSalary: number | undefined; // Changed to undefined
+          let minSalary: number | undefined;
+          let maxSalary: number | undefined;
 
+          // Iterate through selected salary ranges to find the overall min and max
           Array.from(selectedSalaryRanges).forEach((rangeLabel) => {
             const range = salaryRanges.find((s) => s.label === rangeLabel);
             if (range) {
               if (range.min !== null && range.min !== undefined) {
-                // Check for undefined as well
                 minSalary =
                   minSalary === undefined
                     ? range.min
                     : Math.min(minSalary, range.min);
               }
               if (range.max !== null && range.max !== undefined) {
-                // Check for undefined as well
                 maxSalary =
                   maxSalary === undefined
                     ? range.max
@@ -156,12 +163,10 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           });
 
           if (minSalary !== undefined) {
-            // Check for undefined
-            params.append("salary_min", minSalary.toString()); // No more ! needed, type is number
+            params.append("salary_min", minSalary.toString());
           }
           if (maxSalary !== undefined) {
-            // Check for undefined
-            params.append("salary_max", maxSalary.toString()); // No more ! needed, type is number
+            params.append("salary_max", maxSalary.toString());
           }
         }
 
@@ -173,7 +178,6 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         const data = await response.json();
 
         const mappedJobs: Job[] = data.data.map((job: any) => {
-          // MODIFIED: Explicitly typed mappedJobs
           const jobType =
             job.job_employment_type_text ||
             (job.job_employment_type
@@ -185,6 +189,8 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           if (job.job_category) {
             jobCategories = [job.job_category];
           } else if (job.job_highlights && job.job_highlights.Qualifications) {
+            // Fallback: if no direct category, try to derive from qualifications or other highlights
+            // This is a placeholder; you might want more sophisticated logic here.
             jobCategories = [];
           }
 
@@ -197,8 +203,6 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
             jobLocation = "Remote";
           }
 
-          const jobPostedAtTimestamp = job.job_posted_at_timestamp;
-
           return {
             id: job.job_id,
             companyLogo: job.employer_logo,
@@ -209,14 +213,20 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
             categories: jobCategories,
             appliedCount: Math.floor(Math.random() * 20),
             capacity: Math.floor(Math.random() * 20) + 10,
-            job_posted_at_timestamp: jobPostedAtTimestamp,
+            job_posted_at_timestamp: job.job_posted_at_timestamp,
             job_salary_min: job.job_salary_min,
             job_salary_max: job.job_salary_max,
+            // Keeping raw fields in case future client-side logic needs them,
+            // but they are not used for strict client-side filtering anymore.
+            job_employment_type: job.job_employment_type,
+            job_category: job.job_category,
+            job_requirements: job.job_requirements,
           };
         });
         setJobs(mappedJobs);
       } catch (err: any) {
         setError(err.message);
+        console.error("Error fetching jobs:", err); // Log the error for debugging
       } finally {
         setLoading(false);
       }
@@ -227,13 +237,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
     searchQuery,
     location,
     shouldFetchAll,
-    selectedEmploymentTypes,
-    selectedCategories,
-    selectedJobLevels,
-    selectedSalaryRanges,
+    selectedEmploymentTypes, // Dependency for re-fetching when employment types change
+    selectedCategories, // Dependency for re-fetching when categories change
+    selectedJobLevels, // Dependency for re-fetching when job levels change
+    selectedSalaryRanges, // Dependency for re-fetching when salary ranges change
   ]);
 
-  // Client-side sorting
+  // Client-side sorting applied directly to the jobs fetched from the API
   const sortedJobs = useMemo(() => {
     let sortableJobs = [...jobs];
     switch (sortBy) {
@@ -250,17 +260,20 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         );
         break;
       case "Salary (low to high)":
+        // Handle cases where salary might be null/undefined, treat as 0 for sorting
         sortableJobs.sort(
           (a, b) => (a.job_salary_min || 0) - (b.job_salary_min || 0)
         );
         break;
       case "Salary (high to low)":
+        // Handle cases where salary might be null/undefined, treat as 0 for sorting
         sortableJobs.sort(
           (a, b) => (b.job_salary_min || 0) - (a.job_salary_min || 0)
         );
         break;
       case "Most relevant":
       default:
+        // No specific sorting for "Most relevant" as API handles initial relevance
         break;
     }
     return sortableJobs;
@@ -270,6 +283,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
     setOpenFilters((prev) => ({ ...prev, [filterName]: !prev[filterName] }));
   };
 
+  // MODIFIED: handleCheckboxChange to correctly update state
   const handleCheckboxChange = (
     filterType: string,
     value: string,
@@ -290,6 +304,8 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         setSelectedEmploymentTypes(updateSet);
         break;
       case "categories":
+        // For categories, if JSearch only supports one, you might want to replace instead of add
+        // For now, it behaves like multi-select but the API only uses the first.
         setSelectedCategories(updateSet);
         break;
       case "jobLevel":
@@ -303,6 +319,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
     }
   };
 
+  // Dynamic title based on search/location
   const displayTitle = searchQuery
     ? `Jobs for "${searchQuery}"${location ? ` in ${location}` : ""}`
     : `All Jobs${location ? ` in ${location}` : ""}`;
@@ -458,7 +475,7 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-[#4640DE] rounded focus:ring-[#4640DE]"
-                      checked={selectedSalaryRanges.has(range.label)} // Use label for checking, value for API
+                      checked={selectedSalaryRanges.has(range.label)}
                       onChange={(e) =>
                         handleCheckboxChange(
                           "salaryRange",

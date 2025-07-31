@@ -18,8 +18,8 @@ const HomePageSearchResults = () => {
   }
 
   return (
-    <section className="bg-white pt-12 px-4 sm:px-6 lg:px-8">
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+    <section className="bg-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-20 md:py-14">
         <h2 className="text-3xl font-bold font-clash mb-8 text-center">
           Search Results for "{searchQuery || "All Jobs"}"{" "}
           {location && `in ${location}`}
@@ -55,11 +55,10 @@ const HomePageSearchResults = () => {
               <div className="text-center mt-10">
                 <Link
                   href={{
-                    pathname: "/FindJobs",
+                    pathname: "/FindJobs", // Ensure this path is correct for your Pages Router setup
                     query: {
                       q: searchQuery,
-                      loc: location,
-                      fetch_all: "true", // <--- NEW: Pass this parameter
+                      loc: location, // Pass the simplified location directly
                     },
                   }}
                   className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-[#4640DE] hover:bg-blue-700 transition-colors duration-200"

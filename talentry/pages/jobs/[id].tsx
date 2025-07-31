@@ -1,5 +1,5 @@
 // pages/jobs/[id].tsx
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,7 +31,7 @@ import {
 
 // Define the shape of job details data based on JSearch API response
 interface JobDetails {
-  job_category: ReactNode;
+  job_category?: string; // Corrected type from ReactNode to string
   job_id: string;
   employer_logo?: string;
   employer_name?: string;
@@ -64,12 +64,14 @@ const JobDetailsPage: React.FC = () => {
   const [job, setJob] = useState<JobDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false); // State to track image loading errors
 
   useEffect(() => {
     if (id) {
       const fetchJobDetails = async () => {
         setLoading(true);
         setError(null);
+        setImageLoadError(false); // Reset image error state for new job
         try {
           const response = await fetch(`/api/job/${id}`);
           if (!response.ok) {
@@ -209,7 +211,7 @@ const JobDetailsPage: React.FC = () => {
         {/* Back to Jobs Link */}
         <div className="mb-8">
           <Link
-            href="/"
+            href="/FindJobs"
             className="flex items-center text-gray-600 hover:text-[#4640DE] transition-colors duration-200"
           >
             <ChevronLeft size={20} className="mr-1" /> Back to Jobs
@@ -220,13 +222,19 @@ const JobDetailsPage: React.FC = () => {
         <div className="bg-gray-50 p-8 rounded-lg shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center">
             <div className="flex-shrink-0 mr-6">
-              {job.employer_logo ? (
+              {job.employer_logo && !imageLoadError ? ( // Use imageLoadError state here
                 <Image
                   src={job.employer_logo}
                   alt={`${job.employer_name} Logo`}
                   width={80}
                   height={80}
                   className="rounded-lg object-contain"
+                  onError={() => {
+                    setImageLoadError(true);
+                    console.error(
+                      `Failed to load image: ${job.employer_logo}. Check if domain is configured in next.config.js.`
+                    );
+                  }}
                 />
               ) : (
                 <div
@@ -442,13 +450,19 @@ const JobDetailsPage: React.FC = () => {
           </h2>
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="flex-shrink-0">
-              {job.employer_logo ? (
+              {job.employer_logo && !imageLoadError ? ( // Use imageLoadError state here too
                 <Image
                   src={job.employer_logo}
                   alt={`${job.employer_name} Logo`}
                   width={100}
                   height={100}
                   className="rounded-lg object-contain"
+                  onError={() => {
+                    setImageLoadError(true);
+                    console.error(
+                      `Failed to load image: ${job.employer_logo}. Check if domain is configured in next.config.js.`
+                    );
+                  }}
                 />
               ) : (
                 <div
@@ -474,25 +488,6 @@ const JobDetailsPage: React.FC = () => {
               </p>
               {/* Add more company details like website, size, etc. if available from API */}
             </div>
-          </div>
-        </div>
-
-        {/* Similar Jobs Section (Placeholder) */}
-        <div className="mt-12">
-          <h2 className="text-3xl font-bold text-gray-900 font-clash mb-6 text-center">
-            Similar Jobs
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* You would fetch and map similar jobs here, perhaps using job.job_category or related skills */}
-            {/* For now, using placeholder JobCard components */}
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="bg-gray-100 p-4 rounded-lg text-gray-600 text-center"
-              >
-                Placeholder for Similar Job {index + 1}
-              </div>
-            ))}
           </div>
         </div>
       </div>

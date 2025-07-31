@@ -29,7 +29,7 @@ const LatestJobsOpenSection = () => {
             Latest <span className="text-[#4640DE]">Jobs Open</span>
           </h2>
           <Link
-            href="/jobs" // Link to the main jobs page
+            href="/FindJobs" // Link to the main jobs page
             className="flex items-center text-[#4640DE] hover:text-blue-700 font-medium transition-colors duration-200"
           >
             Show all jobs <ArrowRight className="ml-2 w-4 h-4" />
