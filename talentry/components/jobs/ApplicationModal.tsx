@@ -101,8 +101,24 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
       console.log("initFirebase: Starting Firebase initialization...");
       setFirebaseInitLoading(true);
       try {
+        // Retrieve Firebase API key from environment variable
+        const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+        if (!firebaseApiKey) {
+          console.error(
+            "Firebase API Key is not defined. Please set NEXT_PUBLIC_FIREBASE_API_KEY in your .env.local file."
+          );
+          setSubmitMessage(
+            "Firebase service not configured. Please contact support."
+          );
+          setIsSuccess(false);
+          setIsFirebaseReady(false);
+          setFirebaseInitLoading(false);
+          return;
+        }
+
         const firebaseConfig = {
-          apiKey: "AIzaSyAVYS8AZBU8NpzDfR0Do575nM9hpQSoA9k",
+          apiKey: firebaseApiKey, // Use the environment variable here
           authDomain: "talentry-c02fd.firebaseapp.com",
           projectId: "talentry-c02fd",
           storageBucket: "talentry-c02fd.firebasestorage.app",
@@ -455,7 +471,7 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
   const inputBorderVariants = {
     default: { borderColor: "#D1D5DB" }, // gray-300
     invalid: { borderColor: "#EF4444" }, // red-500
-    valid: { borderColor: "#22C55E" }, // green-500
+    valid: { borderColor: "#22C5E" }, // green-500
   };
 
   // Helper function to get the current animation state for an input
