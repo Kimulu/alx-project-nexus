@@ -28,6 +28,7 @@ import {
   Gift,
   BriefcaseMedical,
 } from "lucide-react"; // Import additional icons for perks/benefits
+import ApplicationModal from "@/components/jobs/ApplicationModal"; // Import the new ApplicationModal
 
 // Define the shape of job details data based on JSearch API response
 interface JobDetails {
@@ -65,6 +66,9 @@ const JobDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false); // State to track image loading errors
+
+  // State for the application modal visibility
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -272,19 +276,13 @@ const JobDetailsPage: React.FC = () => {
             <button className="text-gray-400 hover:text-[#4640DE] transition-colors duration-200">
               <Share2 size={24} /> {/* Only Share icon */}
             </button>
-            <Link
-              href={job.job_apply_link || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-center justify-center px-6 py-3 rounded-md text-white bg-[#4640DE] hover:bg-blue-700 transition-colors duration-200
-                ${!job.job_apply_link ? "opacity-50 cursor-not-allowed" : ""}`}
-              aria-disabled={!job.job_apply_link}
-              onClick={(e) => {
-                if (!job.job_apply_link) e.preventDefault();
-              }}
+            {/* MODIFIED: Apply button now opens the modal */}
+            <button
+              onClick={() => setIsApplyModalOpen(true)}
+              className={`flex items-center justify-center px-6 py-3 rounded-md text-white bg-[#4640DE] hover:bg-blue-700 transition-colors duration-200`}
             >
-              Apply {/* Only Apply button text */}
-            </Link>
+              Apply Now {/* Changed text for clarity */}
+            </button>
           </div>
         </div>
 
@@ -490,7 +488,36 @@ const JobDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Similar Jobs Section (Placeholder) */}
+        <div className="mt-12">
+          <h2 className="text-3xl font-bold text-gray-900 font-clash mb-6 text-center">
+            Similar Jobs
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* You would fetch and map similar jobs here, perhaps using job.job_category or related skills */}
+            {/* For now, using placeholder JobCard components */}
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-gray-100 p-4 rounded-lg text-gray-600 text-center"
+              >
+                Placeholder for Similar Job {index + 1}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+      {/* Application Modal */}
+      {job && ( // Only render modal if job data is available
+        <ApplicationModal
+          isOpen={isApplyModalOpen}
+          onClose={() => setIsApplyModalOpen(false)}
+          jobId={job.job_id}
+          jobTitle={job.job_title || "N/A"}
+          companyName={job.employer_name || "N/A"}
+        />
+      )}
     </div>
   );
 };
