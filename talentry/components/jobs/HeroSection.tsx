@@ -62,7 +62,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <section className="bg-[#F8F8FD] py-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-[#F8F8FD] py-24 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl text-center">
         {/* Main Heading */}
         <h1 className="text-[42px] sm:text-[52px] md:text-[50px] lg:text-[70px] leading-[1.1] font-clash text-gray-900 mb-4">

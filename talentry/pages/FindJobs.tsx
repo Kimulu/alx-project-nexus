@@ -34,7 +34,15 @@ const FindJobsPage: React.FC = () => {
       <HeroSection
         mainTitle={
           <>
-            Find your <span className="text-[#4640DE]">dream job</span>
+            Find your{" "}
+            <span className="relative inline-block text-[#26A4FF]">
+              dream job
+              <img
+                src="/underline.png" // Added the underline image here
+                className="absolute left-0 -bottom-6 w-full py-3 max-w-[800px] pointer-events-none"
+                alt="Underline"
+              />
+            </span>
           </>
         }
         subTitle="Find your next career at companies like HubSpot, Nike, and Dropbox."

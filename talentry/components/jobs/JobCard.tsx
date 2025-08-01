@@ -14,6 +14,8 @@ interface JobCardProps {
   categories: string[]; // e.g., ["Marketing", "Design"]
   appliedCount: number;
   capacity: number;
+  // NEW: Added linkToCompanyProfile to the interface
+  linkToCompanyProfile?: boolean;
 }
 
 const JobCard: React.FC<JobCardProps> = ({
