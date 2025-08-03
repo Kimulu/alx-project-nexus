@@ -34,7 +34,7 @@ if (typeof __firebase_config !== "undefined" && __firebase_config) {
 
 // Prioritize environment variable for projectId
 if (!firebaseConfig.projectId) {
-  const envProjectId = process.env.FIREBASE_PROJECT_ID;
+  const envProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   if (envProjectId) {
     console.log(
       "Using FIREBASE_PROJECT_ID from environment variables for applications API."
@@ -89,12 +89,10 @@ export default async function handler(
 
   // Check if Firebase app and database are initialized
   if (!app || !db) {
-    return res
-      .status(500)
-      .json({
-        error:
-          "Server configuration error: Firebase not initialized for applications. Project ID might be missing.",
-      });
+    return res.status(500).json({
+      error:
+        "Server configuration error: Firebase not initialized for applications. Project ID might be missing.",
+    });
   }
 
   // Extract data from the request body

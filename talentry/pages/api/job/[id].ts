@@ -31,7 +31,7 @@ if (typeof __firebase_config !== "undefined" && __firebase_config) {
 // Prioritize environment variable for projectId for robustness
 // This ensures Firebase can be initialized even if __firebase_config is problematic.
 if (!firebaseConfig.projectId) {
-  const envProjectId = process.env.FIREBASE_PROJECT_ID;
+  const envProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   if (envProjectId) {
     console.log(
       "Using FIREBASE_PROJECT_ID from environment variables for job details API."
@@ -95,12 +95,10 @@ export default async function handler(
 
   // Check if Firebase app and database are initialized
   if (!app || !db) {
-    return res
-      .status(500)
-      .json({
-        error:
-          "Server configuration error: Firebase not initialized for job details. Project ID might be missing.",
-      });
+    return res.status(500).json({
+      error:
+        "Server configuration error: Firebase not initialized for job details. Project ID might be missing.",
+    });
   }
 
   // Extract the job ID from the dynamic route parameter (e.g., from /api/job/job_id_123)
@@ -132,11 +130,8 @@ export default async function handler(
   } catch (error) {
     // Catch any errors during the Firestore operation
     console.error("Error fetching job details from Firestore:", error);
-    return res
-      .status(500)
-      .json({
-        error:
-          "Internal server error while fetching job details from database.",
-      });
+    return res.status(500).json({
+      error: "Internal server error while fetching job details from database.",
+    });
   }
 }

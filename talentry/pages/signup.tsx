@@ -3,13 +3,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Mail, Lock, User } from "lucide-react"; // Added User icon for Full Name
+import { useRouter } from "next/router"; // Import useRouter for redirection
 
 const SignUpPage = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // Kept for client-side validation
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter(); // Initialize useRouter
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -17,8 +20,14 @@ const SignUpPage = () => {
     setLoading(true);
 
     // Basic validation
-    if (!fullName || !email || !password) {
+    if (!fullName || !email || !password || !confirmPassword) {
       setError("Please fill in all fields.");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       setLoading(false);
       return;
     }
@@ -29,36 +38,27 @@ const SignUpPage = () => {
       return;
     }
 
-    // Simulate API call - this is where your new backend logic will go
     try {
       console.log("Attempting to sign up with:", { fullName, email, password });
-      // Example:
-      // const response = await fetch('/api/signup', { // Your own backend API route
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ fullName, email, password }),
-      // });
-      // const data = await response.json();
-      // if (response.ok) {
-      //   console.log('Sign up successful:', data);
-      //   // Redirect user to login or verification page
-      // } else {
-      //   setError(data.message || 'Sign up failed. Please try again.');
-      // }
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
 
-      if (fullName && email && password) {
-        // Simplified check for demo
-        console.log("Sign up successful!");
-        alert(
-          "Sign up successful! (In a real app, you'd be redirected to login)"
-        ); // Using alert for demo purposes
-        // Optionally clear form or redirect
-        setFullName("");
-        setEmail("");
-        setPassword("");
+      // Make a POST request to your new backend API route
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fullName, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Sign up successful:", data);
+        // Redirect user to the login page after successful signup
+        router.push("/login");
       } else {
-        setError("Sign up failed. Please try again.");
+        // Display error message from the API response
+        setError(data.message || "Sign up failed. Please try again.");
       }
     } catch (err) {
       console.error("Sign up error:", err);
@@ -121,8 +121,6 @@ const SignUpPage = () => {
         <div className="max-w-md w-full space-y-8">
           {/* JobHuntly Logo - Now inside the right section, centered horizontally */}
           <div className="flex justify-center mb-8">
-            {" "}
-            {/* Added flex justify-center and mb-8 for spacing */}
             <Link href="/" className="flex items-center space-x-2">
               <Image
                 src="/Logo.png" // Ensure this path is correct relative to your 'public' folder
@@ -143,8 +141,6 @@ const SignUpPage = () => {
 
           {/* Job Seeker / Company Toggle (Simplified for now) */}
           <div className="flex justify-center mb-6">
-            {" "}
-            {/* Removed mt-10 lg:mt-0 as logo is now inline */}
             <button className="px-4 py-2 rounded-l-lg bg-[#4640DE] text-white font-medium">
               Job Seeker
             </button>
@@ -244,6 +240,33 @@ const SignUpPage = () => {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Confirm Password Input */}
+            <div>
+              <label
+                htmlFor="confirm-password"
+                className="block text-sm font-medium text-gray-700 sr-only"
+              >
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <input
+                  id="confirm-password"
+                  name="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#4640DE] focus:border-[#4640DE] sm:text-sm"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
             </div>

@@ -40,7 +40,7 @@ if (typeof __firebase_config !== "undefined" && __firebase_config) {
 // Prioritize environment variable for projectId for robustness
 // This ensures Firebase can be initialized even if __firebase_config is problematic.
 if (!firebaseConfig.projectId) {
-  const envProjectId = process.env.FIREBASE_PROJECT_ID;
+  const envProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   if (envProjectId) {
     console.log(
       "Using FIREBASE_PROJECT_ID from environment variables for API."
