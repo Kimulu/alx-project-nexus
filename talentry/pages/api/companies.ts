@@ -32,7 +32,7 @@ if (typeof __firebase_config !== "undefined" && __firebase_config) {
 }
 
 if (!firebaseConfig.projectId) {
-  const envProjectId = process.env.FIREBASE_PROJECT_ID;
+  const envProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   if (envProjectId) {
     console.log(
       "Using FIREBASE_PROJECT_ID from environment variables for API."
@@ -85,12 +85,10 @@ export default async function handler(
   }
 
   if (!app || !db) {
-    return res
-      .status(500)
-      .json({
-        error:
-          "Server configuration error: Firebase not initialized. Project ID might be missing.",
-      });
+    return res.status(500).json({
+      error:
+        "Server configuration error: Firebase not initialized. Project ID might be missing.",
+    });
   }
 
   try {

@@ -209,7 +209,6 @@ const JobDetailsPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen pt-24 pb-12 font-epilogue">
-      {" "}
       {/* pt-24 to clear fixed header */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Back to Jobs Link */}
@@ -222,11 +221,14 @@ const JobDetailsPage: React.FC = () => {
           </Link>
         </div>
 
-        {/* Job Header Section - MODIFIED */}
-        <div className="bg-gray-50 p-8 rounded-lg shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 mr-6">
-              {job.employer_logo && !imageLoadError ? ( // Use imageLoadError state here
+        {/* Job Header Section - REFINED FOR MOBILE */}
+        <div className="bg-gray-50 p-6 sm:p-8 rounded-lg shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          {" "}
+          {/* Added justify-between here */}
+          {/* Job Info Section (Left/Top) */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start w-full md:w-auto">
+            <div className="flex-shrink-0 mr-0 sm:mr-6 mb-4 sm:mb-0">
+              {job.employer_logo && !imageLoadError ? (
                 <Image
                   src={job.employer_logo}
                   alt={`${job.employer_name} Logo`}
@@ -242,46 +244,45 @@ const JobDetailsPage: React.FC = () => {
                 />
               ) : (
                 <div
-                  className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-3xl font-bold"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center text-white text-2xl sm:text-3xl font-bold"
                   style={{ backgroundColor: placeholderBgColor }}
                 >
                   {companyInitial}
                 </div>
               )}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 font-clash mb-1">
-                {" "}
-                {/* Reduced heading size */}
+            <div className="text-center sm:text-left w-full sm:w-auto">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 font-clash mb-1">
                 {job.job_title}
               </h1>
-              <p className="text-gray-600 text-base flex items-center">
-                {" "}
-                {/* Reduced text size */}
-                <Building2 size={16} className="mr-1" /> {job.employer_name}
-                <span className="mx-2">•</span>
-                <MapPin size={16} className="mr-1" />{" "}
-                {job.job_city && job.job_state
-                  ? `${job.job_city}, ${job.job_state}`
-                  : job.job_country || (job.job_is_remote ? "Remote" : "N/A")}
-                <span className="mx-2">•</span>
-                <Briefcase size={16} className="mr-1" />{" "}
-                {getJobTypeDisplay(job.job_employment_type)}
+              <p className="text-gray-600 text-sm sm:text-base flex flex-wrap justify-center sm:justify-start items-center gap-x-2">
+                <span className="flex items-center flex-shrink-0">
+                  <Building2 size={16} className="mr-1" /> {job.employer_name}
+                </span>
+                <span className="flex items-center flex-shrink-0">
+                  <MapPin size={16} className="mr-1" />{" "}
+                  {job.job_city && job.job_state
+                    ? `${job.job_city}, ${job.job_state}`
+                    : job.job_country || (job.job_is_remote ? "Remote" : "N/A")}
+                </span>
+                <span className="flex items-center flex-shrink-0">
+                  <Briefcase size={16} className="mr-1" />{" "}
+                  {getJobTypeDisplay(job.job_employment_type)}
+                </span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 md:ml-auto">
-            {" "}
-            {/* Simplified buttons */}
-            <button className="text-gray-400 hover:text-[#4640DE] transition-colors duration-200">
-              <Share2 size={24} /> {/* Only Share icon */}
+          {/* Action Buttons Section (Right/Bottom) - Now always a row, centered on mobile */}
+          <div className="flex flex-row items-center justify-center gap-4 w-full mt-4 md:mt-0 md:ml-auto">
+            <button className="flex items-center justify-center p-3 rounded-md text-gray-600 hover:text-[#4640DE] hover:bg-gray-100 transition-colors duration-200 border border-gray-300 flex-shrink-0">
+              <Share2 size={20} className="mr-2" /> Share
             </button>
-            {/* MODIFIED: Apply button now opens the modal */}
             <button
               onClick={() => setIsApplyModalOpen(true)}
-              className={`flex items-center justify-center px-6 py-3 rounded-md text-white bg-[#4640DE] hover:bg-blue-700 transition-colors duration-200`}
+              // MODIFIED CLASSES FOR RESPONSIVE BUTTON SIZE
+              className={`w-full md:w-auto md:max-w-[180px] px-6 py-3 rounded-md text-white bg-[#4640DE] hover:bg-blue-700 transition-colors duration-200`}
             >
-              Apply Now {/* Changed text for clarity */}
+              Apply Now
             </button>
           </div>
         </div>
@@ -293,10 +294,10 @@ const JobDetailsPage: React.FC = () => {
             {/* Description */}
             {job.job_description && (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                   Description
                 </h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm sm:text-base">
                   {job.job_description}
                 </p>
               </div>
@@ -306,10 +307,10 @@ const JobDetailsPage: React.FC = () => {
             {job.job_highlights?.Responsibilities &&
               job.job_highlights.Responsibilities.length > 0 && (
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                     Responsibilities
                   </h2>
-                  <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  <ul className="list-disc list-inside text-gray-700 space-y-2 text-sm sm:text-base">
                     {job.job_highlights.Responsibilities.map((item, index) => (
                       <li key={index}>{item}</li>
                     ))}
@@ -321,10 +322,10 @@ const JobDetailsPage: React.FC = () => {
             {job.job_highlights?.Qualifications &&
               job.job_highlights.Qualifications.length > 0 && (
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                     Who You Are
                   </h2>
-                  <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  <ul className="list-disc list-inside text-gray-700 space-y-2 text-sm sm:text-base">
                     {job.job_highlights.Qualifications.map((item, index) => (
                       <li key={index}>{item}</li>
                     ))}
@@ -336,10 +337,10 @@ const JobDetailsPage: React.FC = () => {
             {job.job_highlights?.["Nice-To-Haves"] &&
               job.job_highlights["Nice-To-Haves"].length > 0 && (
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                     Nice-To-Haves
                   </h2>
-                  <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  <ul className="list-disc list-inside text-gray-700 space-y-2 text-sm sm:text-base">
                     {job.job_highlights["Nice-To-Haves"].map((item, index) => (
                       <li key={index}>{item}</li>
                     ))}
@@ -351,10 +352,10 @@ const JobDetailsPage: React.FC = () => {
             {job.job_highlights?.Benefits &&
               job.job_highlights.Benefits.length > 0 && (
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                     Perks & Benefits
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700 text-sm sm:text-base">
                     {job.job_highlights.Benefits.map((item, index) => {
                       const Icon = getBenefitIcon(item); // Get the appropriate icon component
                       return (
@@ -377,10 +378,10 @@ const JobDetailsPage: React.FC = () => {
           <div className="lg:col-span-1 space-y-8">
             {/* About this Role */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                 About this role
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-3 text-sm sm:text-base">
                 <p className="text-gray-700">
                   <span className="font-medium">Salary:</span>{" "}
                   {formatSalary(
@@ -408,11 +409,11 @@ const JobDetailsPage: React.FC = () => {
             {/* Categories */}
             {job.job_category && (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                   Categories
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
                     {job.job_category}
                   </span>
                 </div>
@@ -422,14 +423,14 @@ const JobDetailsPage: React.FC = () => {
             {/* Required Skills */}
             {job.job_required_skills && job.job_required_skills.length > 0 && (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
                   Required Skills
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {job.job_required_skills.map((skill, index) => (
                     <span
                       key={index}
-                      className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
+                      className="text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
                     >
                       {skill}
                     </span>
@@ -440,14 +441,13 @@ const JobDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Company Overview (if available) - Assuming you might add this later from job.employer_info */}
-        {/* Placeholder for company info block from Figma UI */}
+        {/* Company Overview (if available) - MODIFIED FOR RESPONSIVENESS */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-clash">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 font-clash">
             About {job.employer_name || "the Company"}
           </h2>
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 mb-4 md:mb-0">
               {job.employer_logo && !imageLoadError ? ( // Use imageLoadError state here too
                 <Image
                   src={job.employer_logo}
@@ -464,7 +464,7 @@ const JobDetailsPage: React.FC = () => {
                 />
               ) : (
                 <div
-                  className="w-24 h-24 rounded-lg flex items-center justify-center text-white text-4xl font-bold"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg flex items-center justify-center text-white text-3xl sm:text-4xl font-bold"
                   style={{ backgroundColor: placeholderBgColor }}
                 >
                   {companyInitial}
@@ -472,12 +472,12 @@ const JobDetailsPage: React.FC = () => {
               )}
             </div>
             <div>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                 {/* This description would ideally come from a dedicated employer_info field in JSearch API
-                            or a separate API call for company details. For now, using a placeholder or
-                            a very short snippet if available. JSearch 'job-details' doesn't provide
-                            extensive company descriptions directly.
-                        */}
+                                    or a separate API call for company details. For now, using a placeholder or
+                                    a very short snippet if available. JSearch 'job-details' doesn't provide
+                                    extensive company descriptions directly.
+                                */}
                 {job.employer_name} is a leading company in its field, committed
                 to innovation and fostering a dynamic work environment. We
                 believe in empowering our employees and driving impactful
@@ -486,25 +486,6 @@ const JobDetailsPage: React.FC = () => {
               </p>
               {/* Add more company details like website, size, etc. if available from API */}
             </div>
-          </div>
-        </div>
-
-        {/* Similar Jobs Section (Placeholder) */}
-        <div className="mt-12">
-          <h2 className="text-3xl font-bold text-gray-900 font-clash mb-6 text-center">
-            Similar Jobs
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* You would fetch and map similar jobs here, perhaps using job.job_category or related skills */}
-            {/* For now, using placeholder JobCard components */}
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="bg-gray-100 p-4 rounded-lg text-gray-600 text-center"
-              >
-                Placeholder for Similar Job {index + 1}
-              </div>
-            ))}
           </div>
         </div>
       </div>

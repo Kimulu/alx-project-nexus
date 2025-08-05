@@ -10,6 +10,18 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter(); // Initialize useRouter
 
+  // Define an array of dashboard paths where the navbar should be hidden
+  const dashboardPaths = [
+    "/ApplicantDashboard",
+    "/CompanyDashboard",
+    // Add any other dashboard-like paths here if they are created later
+  ];
+
+  // Check if the current path is a dashboard path or any sub-path
+  const isDashboardPath = dashboardPaths.some((path) =>
+    router.pathname.startsWith(path)
+  );
+
   useEffect(() => {
     const handleScroll = () => {
       // Adjusted threshold for sensitivity
@@ -20,24 +32,33 @@ const Header = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    // Only add scroll listener if not on a dashboard path
+    if (!isDashboardPath) {
+      window.addEventListener("scroll", handleScroll);
+    }
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      if (!isDashboardPath) {
+        // Clean up listener only if it was added
+        window.removeEventListener("scroll", handleScroll);
+      }
     };
-  }, []);
+  }, [isDashboardPath]); // Re-run effect if isDashboardPath changes
 
   // Function to check if a link is active
   const isActive = (pathname: string) => {
-    // For "Find Jobs" and "Browse Companies", check if the current path starts with the link's href
-    // This handles cases like /jobs/123 being active for /jobs
     if (pathname === "/") {
-      // Home page is special, only active if exactly '/'
       return router.pathname === pathname;
     }
     return router.pathname.startsWith(pathname);
   };
 
+  // If on a dashboard path, return null to render nothing
+  if (isDashboardPath) {
+    return null; // This will hide the entire header component
+  }
+
+  // If not on a dashboard path, render the full header
   return (
     <header
       className={`w-full fixed top-0 z-50
@@ -63,7 +84,7 @@ const Header = () => {
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center space-x-6">
               <Link
-                href="/FindJobs" // Changed to /jobs as per your page structure
+                href="/FindJobs"
                 className={`text-gray-700 font-nav text-[14px] mt-1.5 hover:text-[#4640DE] transition
                   ${
                     isActive("/FindJobs")
@@ -75,7 +96,7 @@ const Header = () => {
                 Find Jobs
               </Link>
               <Link
-                href="/BrowseCompanies" // Changed to /companies as per your page structure
+                href="/BrowseCompanies"
                 className={`text-gray-700 font-nav text-[14px] mt-1.5 hover:text-[#4640DE] transition
                   ${
                     isActive("/BrowseCompanies")

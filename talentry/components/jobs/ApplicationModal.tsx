@@ -917,5 +917,4 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
     </div>
   );
 };
-
 export default ApplicationModal;

@@ -1,13 +1,9 @@
+// src/components/Footer.tsx
 "use client";
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Facebook,
-  Instagram,
-  Linkedin,
-  Twitter, // Removed Youtube as it's not in Figma or previous code
-} from "lucide-react"; // Social media icons
+import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react"; // Social media icons
 
 const Footer = () => {
   const currentYear = new Date().getFullYear(); // Get the current year dynamically
@@ -15,10 +11,8 @@ const Footer = () => {
     <footer className="bg-[#1F2024] text-gray-300 py-16 px-4 sm:px-6 lg:px-8">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Top Section: Logo, Description, Nav Links, Subscribe Form */}
-        {/* Changed grid-cols to lg:grid-cols-3 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 pb-12 border-b border-gray-700">
           {/* Column 1: Logo and Description */}
-          {/* Adjusted col-span for lg screens to fit 3-column layout */}
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center space-x-2 mb-4">
               <Image
@@ -38,12 +32,9 @@ const Footer = () => {
           </div>
 
           {/* Column 2: Combined About and Resources Links */}
-          {/* This div now contains both About and Resources, arranged responsively */}
           <div className="col-span-1 md:col-span-1 lg:col-span-1 flex flex-col sm:flex-row justify-between sm:space-x-8 lg:space-x-0">
             {/* About Links */}
             <div className="mb-8 sm:mb-0">
-              {" "}
-              {/* Added mb-8 for mobile spacing */}
               <h3 className="text-white font-semibold text-lg mb-6">About</h3>
               <ul className="space-y-3">
                 <li>
@@ -131,26 +122,24 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Column 3: Get job notifications */}
-          {/* This remains in its own column */}
+          {/* Column 3: Get job notifications - MADE RESPONSIVE */}
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
-            {" "}
-            {/* Adjusted col-span for md to prevent wrapping */}
             <h3 className="text-white font-semibold text-lg mb-6">
               Get job notifications
             </h3>
             <p className="text-gray-400 text-base mb-4">
               The latest job news, articles, sent to your inbox weekly.
             </p>
-            <form className="flex">
+            {/* Responsive form container */}
+            <form className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
                 placeholder="Email Address"
-                className="flex-grow p-1 rounded-l-md bg-[#2D3035] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
+                className="flex-grow w-full px-4 py-3 rounded-md sm:rounded-l-md sm:rounded-r-none bg-[#2D3035] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
               <button
                 type="submit"
-                className="bg-[#4640DE] text-white px-4 py-3 rounded-r-md font-medium hover:bg-blue-700 transition-colors duration-200"
+                className="w-full sm:w-auto bg-[#4640DE] text-white px-4 py-3 rounded-md sm:rounded-r-md sm:rounded-l-none font-medium hover:bg-blue-700 transition-colors duration-200"
               >
                 Subscribe
               </button>
