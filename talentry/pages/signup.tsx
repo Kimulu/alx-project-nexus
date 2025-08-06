@@ -228,7 +228,7 @@ const SignUpPage = () => {
           <p className="text-gray-600 mb-4">People got hired</p>
           <div className="flex items-center justify-center mb-4">
             <Image
-              src="/image.png"
+              src="/Image.png"
               alt="Adam Sandler"
               width={40}
               height={40}

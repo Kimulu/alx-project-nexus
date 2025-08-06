@@ -118,18 +118,6 @@ const LoginPage = () => {
     setIsPasswordValid(validatePassword(password));
   };
 
-  // Effect to handle redirection if already logged in
-  useEffect(() => {
-    // Wait until Firebase auth state is fully loaded
-    if (loadingAuth) {
-      return;
-    }
-    // If Firebase is ready and a user is logged in, redirect them
-    if (isFirebaseReady && currentUser) {
-      router.push("/ApplicantDashboard");
-    }
-  }, [loadingAuth, isFirebaseReady, currentUser, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -248,7 +236,7 @@ const LoginPage = () => {
           <p className="text-gray-600 mb-4">People got hired</p>
           <div className="flex items-center justify-center mb-4">
             <Image
-              src="/image.png" // Placeholder for image.png
+              src="/Image.png" // Placeholder for image.png
               alt="Adam Sandler"
               width={40}
               height={40}
