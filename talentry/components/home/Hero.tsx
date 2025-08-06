@@ -175,28 +175,28 @@ const Hero = () => {
               {/* Added text-center for small screens */}
               Popular :{" "}
               <Link
-                href="/jobs?q=UI+Designer"
+                href="/FindJobs?q=Designer"
                 className="text-[#4640DE] hover:underline"
               >
                 UI Designer
               </Link>
               ,{" "}
               <Link
-                href="/jobs?q=UX+Researcher"
+                href="/FindJobs?q=UX"
                 className="text-[#4640DE] hover:underline"
               >
                 UX Researcher
               </Link>
               ,{" "}
               <Link
-                href="/jobs?q=Android"
+                href="/FindJobs?q=Developer"
                 className="text-[#4640DE] hover:underline"
               >
                 Android
               </Link>
               ,{" "}
               <Link
-                href="/jobs?q=Admin"
+                href="/FindJobs?q=Admin"
                 className="text-[#4640DE] hover:underline"
               >
                 Admin

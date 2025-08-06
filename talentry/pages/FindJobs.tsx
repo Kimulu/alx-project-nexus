@@ -49,9 +49,9 @@ const FindJobsPage: React.FC = () => {
         searchPlaceholder="Job title or keyword"
         searchButtonText="Find Job"
         popularSearches={[
-          { text: "technology", link: "/FindJobs?q=technology" },
-          { text: "UX Researcher", link: "/FindJobs?q=UX+UX+Researcher" }, // Corrected typo
-          { text: "Android", link: "/FindJobs?q=Android" },
+          { text: "technology", link: "/FindJobs?q=Developer" },
+          { text: "UX Researcher", link: "/FindJobs?q=UX" }, // Corrected typo
+          { text: "Android", link: "/FindJobs?q=Developer" },
           { text: "Admin", link: "/FindJobs?q=Admin" },
         ]}
         // Pass the initial values derived from URL query parameters
