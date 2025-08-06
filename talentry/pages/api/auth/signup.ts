@@ -9,6 +9,12 @@ interface FirebaseConfig {
   privateKey?: string;
 }
 
+// Define an interface for Firebase Admin SDK errors that have a 'code' and 'message'
+interface FirebaseAuthError {
+  code: string;
+  message: string;
+}
+
 // Firebase configuration for Admin SDK
 let firebaseConfig: FirebaseConfig = {};
 
@@ -29,6 +35,8 @@ if (
   );
 } else {
   // Fallback for Canvas environment if direct env vars are not set
+  // This assumes __firebase_config is globally available in the Canvas environment
+  // and contains at least projectId.
   if (typeof __firebase_config !== "undefined" && __firebase_config) {
     try {
       const parsedConfig = JSON.parse(__firebase_config);
@@ -36,13 +44,22 @@ if (
       // Note: __firebase_config typically contains client-side keys.
       // For Admin SDK, `clientEmail` and `privateKey` are crucial.
       // If running outside Canvas with only __firebase_config, ensure these are provided.
-    } catch (e) {
-      console.error("Error parsing __firebase_config for Admin SDK:", e);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error(
+          "Error parsing __firebase_config for Admin SDK:",
+          e.message
+        );
+      } else {
+        console.error("Error parsing __firebase_config for Admin SDK:", e);
+      }
     }
   }
 }
 
 // Get the Canvas application ID for Firestore paths
+// This assumes __app_id is globally available in the Canvas environment.
+declare const __app_id: string | undefined; // Declare __app_id for TypeScript
 const appId = typeof __app_id !== "undefined" ? __app_id : "default-app-id";
 
 // Initialize Firebase Admin SDK only once
@@ -67,8 +84,12 @@ if (!admin.apps.length) {
       );
       admin.initializeApp(); // For environments like Cloud Functions where it auto-initializes
     }
-  } catch (e) {
-    console.error("Failed to initialize Firebase Admin SDK:", e);
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      console.error("Failed to initialize Firebase Admin SDK:", e.message);
+    } else {
+      console.error("Failed to initialize Firebase Admin SDK:", e);
+    }
   }
 }
 
@@ -126,11 +147,24 @@ export default async function handler(
     return res
       .status(201)
       .json({ message: "User created successfully!", uid: userRecord.uid });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Firebase signup error:", error);
 
     let errorMessage = "An unexpected error occurred during signup.";
-    if (error.code) {
+
+    // Type guard to check if the error object conforms to FirebaseAuthError
+    function isFirebaseAuthError(err: unknown): err is FirebaseAuthError {
+      return (
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        typeof (err as FirebaseAuthError).code === "string" &&
+        "message" in err &&
+        typeof (err as FirebaseAuthError).message === "string"
+      );
+    }
+
+    if (isFirebaseAuthError(error)) {
       switch (error.code) {
         case "auth/email-already-exists":
           errorMessage =
@@ -147,10 +181,13 @@ export default async function handler(
           errorMessage = "Invalid arguments provided for user creation.";
           break;
         default:
-          errorMessage = error.message;
+          errorMessage = error.message; // Use the message from the Firebase error
           break;
       }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
     }
+
     return res.status(400).json({ message: errorMessage });
   }
 }

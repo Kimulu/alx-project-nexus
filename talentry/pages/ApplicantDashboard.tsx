@@ -18,8 +18,13 @@ const ApplicantDashboard = () => {
         await signOut(auth);
         console.log("User logged out successfully.");
         router.push("/"); // Redirect to the home/login page after logout
-      } catch (error: any) {
-        console.error("Error logging out:", error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          // Type guard to safely access error.message
+          console.error("Error logging out:", error.message);
+        } else {
+          console.error("An unknown error occurred during logout:", error);
+        }
         // You might want to display an error message to the user here
       }
     }

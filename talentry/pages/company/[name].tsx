@@ -2,7 +2,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import { MapPin, Briefcase, Users, Globe } from "lucide-react"; // Icons for company info
 import JobFilterAndListings from "@/components/jobs/JobFilterAndListings"; // Reuse job listings component
 import Link from "next/link";

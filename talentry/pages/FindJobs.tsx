@@ -54,7 +54,6 @@ const FindJobsPage: React.FC = () => {
           { text: "Android", link: "/FindJobs?q=Android" },
           { text: "Admin", link: "/FindJobs?q=Admin" },
         ]}
-        searchType="job"
         // Pass the initial values derived from URL query parameters
         initialSearchQuery={initialSearchQuery}
         initialLocation={initialLocation}

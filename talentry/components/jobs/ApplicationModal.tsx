@@ -138,8 +138,10 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
     try {
       new URL(url); // Check if it's a valid URL format
       return url.startsWith("http://") || url.startsWith("https://"); // Ensure it has a protocol
-    } catch (e) {
-      return false; // Invalid URL format
+    } catch (err) {
+      console.log(err);
+      return false;
+      // Invalid URL format
     }
   };
 
@@ -902,8 +904,8 @@ const ApplicationModal: React.FC<ApplicationModalProps> = ({
               Application Sent!
             </h3>
             <p className="text-gray-600 mb-6">
-              Your application for "{jobTitle}" at {companyName} has been
-              successfully submitted.
+              Your application for &quot;{jobTitle}&quot; at {companyName} has
+              been successfully submitted.
             </p>
             <button
               onClick={onClose}

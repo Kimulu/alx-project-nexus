@@ -39,8 +39,8 @@ const CompanyDashboard = () => {
               Company Profile
             </h2>
             <p className="mt-2 text-blue-700">
-              View and update your company's information, branding, and contact
-              details.
+              View and update your company&apos;s information, branding, and
+              contact details.
             </p>
             <button className="mt-4 text-blue-600 hover:underline font-medium">
               Go to Profile &rarr;

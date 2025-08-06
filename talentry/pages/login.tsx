@@ -5,8 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useFirebase } from "@/context/FirebaseContext"; // Adjust path as needed
 import {
-  signInWithEmailAndPassword,
-  signInWithCustomToken,
+  signInWithCustomToken, // Removed signInWithEmailAndPassword as it was unused
 } from "firebase/auth";
 import { motion, Variants } from "framer-motion";
 import {
@@ -125,6 +124,10 @@ const LoginPage = () => {
     if (loadingAuth) {
       return;
     }
+    // If Firebase is ready and a user is logged in, redirect them
+    if (isFirebaseReady && currentUser) {
+      router.push("/ApplicantDashboard");
+    }
   }, [loadingAuth, isFirebaseReady, currentUser, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -194,10 +197,17 @@ const LoginPage = () => {
 
       // Step 3: Redirect to the applicant dashboard upon successful login
       router.push("/ApplicantDashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // Changed 'any' to 'unknown'
       console.error("Login error:", err);
       // Handle Firebase client-side errors (though most should be caught by backend API)
-      setApiError(err.message || "An unexpected error occurred during login.");
+      if (err instanceof Error) {
+        setApiError(
+          err.message || "An unexpected error occurred during login."
+        );
+      } else {
+        setApiError("An unexpected error occurred during login.");
+      }
     } finally {
       setLoading(false);
     }
@@ -255,8 +265,8 @@ const LoginPage = () => {
             </div>
           </div>
           <p className="italic text-gray-700">
-            "Great platform for the job seeker that searching for new career
-            heights."
+            &quot;Great platform for the job seeker that searching for new
+            career heights.&quot;
           </p>
         </div>
       </div>

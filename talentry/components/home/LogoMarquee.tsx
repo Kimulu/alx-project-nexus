@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react"; // Removed useState as it's not used
 import Image from "next/image";
 
 // IMPORTANT: Replace these src URLs with the actual paths to your logo images
@@ -20,57 +20,56 @@ const LogoMarquee = () => {
 
   const scrollSpeed = 0.5;
 
-  // Function to calculate and update the reset point
-  const calculateAndSetResetPoint = () => {
-    const inner = innerRef.current;
-    if (inner) {
-      // The reset point is half the total scrollWidth of the duplicated content
-      resetPointRef.current = inner.scrollWidth / 2;
-    }
-  };
-
-  // The core animation function
-  const animateScroll = () => {
-    const currentMarquee = marqueeRef.current;
-    if (!currentMarquee) {
-      stopAnimation(); // Stop if the marquee element is no longer available
-      return;
-    }
-
-    currentScrollRef.current += scrollSpeed;
-    // If we've scrolled past the reset point, jump back to the start
-    if (currentScrollRef.current >= resetPointRef.current) {
-      currentScrollRef.current = 0;
-    }
-    currentMarquee.scrollLeft = currentScrollRef.current;
-    animationFrameId.current = requestAnimationFrame(animateScroll);
-  };
-
-  // Function to start the animation loop
-  const startAnimation = () => {
-    if (animationFrameId.current !== null) {
-      cancelAnimationFrame(animationFrameId.current); // Cancel any existing animation
-    }
-    animationFrameId.current = requestAnimationFrame(animateScroll);
-  };
-
-  // Function to stop the animation loop
-  const stopAnimation = () => {
-    if (animationFrameId.current !== null) {
-      cancelAnimationFrame(animationFrameId.current);
-      animationFrameId.current = null;
-    }
-    if (marqueeRef.current) {
-      marqueeRef.current.scrollLeft = 0; // Reset visual scroll position
-    }
-    currentScrollRef.current = 0; // Reset internal scroll tracker
-  };
-
   useEffect(() => {
     const marquee = marqueeRef.current;
     const inner = innerRef.current;
 
     if (!marquee || !inner) return;
+
+    // Function to calculate and update the reset point
+    const calculateAndSetResetPoint = () => {
+      if (innerRef.current) {
+        // The reset point is half the total scrollWidth of the duplicated content
+        resetPointRef.current = innerRef.current.scrollWidth / 2;
+      }
+    };
+
+    // The core animation function
+    const animateScroll = () => {
+      const currentMarquee = marqueeRef.current;
+      if (!currentMarquee) {
+        stopAnimation(); // Stop if the marquee element is no longer available
+        return;
+      }
+
+      currentScrollRef.current += scrollSpeed;
+      // If we've scrolled past the reset point, jump back to the start
+      if (currentScrollRef.current >= resetPointRef.current) {
+        currentScrollRef.current = 0;
+      }
+      currentMarquee.scrollLeft = currentScrollRef.current;
+      animationFrameId.current = requestAnimationFrame(animateScroll);
+    };
+
+    // Function to start the animation loop
+    const startAnimation = () => {
+      if (animationFrameId.current !== null) {
+        cancelAnimationFrame(animationFrameId.current); // Cancel any existing animation
+      }
+      animationFrameId.current = requestAnimationFrame(animateScroll);
+    };
+
+    // Function to stop the animation loop
+    const stopAnimation = () => {
+      if (animationFrameId.current !== null) {
+        cancelAnimationFrame(animationFrameId.current);
+        animationFrameId.current = null;
+      }
+      if (marqueeRef.current) {
+        marqueeRef.current.scrollLeft = 0; // Reset visual scroll position
+      }
+      currentScrollRef.current = 0; // Reset internal scroll tracker
+    };
 
     // Handle window resize
     const handleResize = () => {

@@ -1,13 +1,10 @@
-// pages/companies/index.tsx
 "use client";
-import React, { useState, useEffect, useMemo } from "react"; // Added useMemo for recommendedCompanies
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import HeroSection from "@/components/jobs/HeroSection"; // Reusing the HeroSection
-import { Building2, Briefcase } from "lucide-react"; // Icons for company cards
-import CallToActionSection from "@/components/home/CallToActionSection"; // Import CallToActionSection
-import CompanyPageSearchResults from "@/components/companies/CompanyPageSearchResults"; // NEW: Import the new component
-import { scroller } from "react-scroll"; // NEW: Import scroller for smooth scrolling
+import HeroSection from "@/components/jobs/HeroSection";
+import CallToActionSection from "@/components/home/CallToActionSection";
+import CompanyPageSearchResults from "@/components/companies/CompanyPageSearchResults";
+import { scroller } from "react-scroll";
 
 // Define interfaces for data structures
 interface Company {
@@ -16,18 +13,12 @@ interface Company {
   jobCount: number;
 }
 
-interface CompanyCategory {
-  label: string;
-  value: string;
-  icon: React.ElementType; // For LucideReact icons
-}
-
 const BrowseCompaniesPage: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // NEW: Local state for the search query and location on THIS page
+  // Local state for the search query and location on THIS page
   const [currentSearchQuery, setCurrentSearchQuery] = useState("");
   const [currentSearchLocation, setCurrentSearchLocation] = useState("");
 
@@ -43,9 +34,19 @@ const BrowseCompaniesPage: React.FC = () => {
         }
         const data = await response.json();
         setCompanies(data.data || []);
-      } catch (err: any) {
-        setError(err.message);
-        console.error("Error fetching companies:", err);
+      } catch (err: unknown) {
+        // Changed 'any' to 'unknown'
+        if (err instanceof Error) {
+          // Type guard to safely access error.message
+          setError(err.message);
+          console.error("Error fetching companies:", err);
+        } else {
+          setError("An unknown error occurred while fetching companies.");
+          console.error(
+            "An unknown error occurred while fetching companies:",
+            err
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -54,19 +55,7 @@ const BrowseCompaniesPage: React.FC = () => {
     fetchCompanies();
   }, []);
 
-  // Define company categories with Lucide icons
-  const companyCategories: CompanyCategory[] = [
-    { label: "Design", value: "Design", icon: Building2 },
-    { label: "Fintech", value: "Fintech", icon: Briefcase },
-    { label: "Hosting", value: "Hosting", icon: Building2 }, // Placeholder icon
-    { label: "Business Service", value: "Business Service", icon: Briefcase },
-    { label: "Development", value: "Development", icon: Building2 }, // Placeholder icon
-    { label: "Marketing", value: "Marketing", icon: Briefcase },
-    { label: "Human Resource", value: "Human Resource", icon: Building2 },
-    { label: "Finance", value: "Finance", icon: Briefcase },
-    { label: "Engineering", value: "Engineering", icon: Building2 },
-    { label: "Technology", value: "Technology", icon: Briefcase },
-  ];
+  // Removed: companyCategories array as it was unused.
 
   // Function to generate a random pastel-like color for the placeholder
   const getRandomColor = () => {
@@ -86,17 +75,17 @@ const BrowseCompaniesPage: React.FC = () => {
     return shuffled.slice(0, 8); // Take the first 8 after shuffling
   }, [companies]);
 
-  // NEW: Handle search submission from HeroSection
+  // Handle search submission from HeroSection
   const handleSearchSubmit = (query: string, location: string) => {
     setCurrentSearchQuery(query);
     setCurrentSearchLocation(location);
     // The smooth scroll will be handled by the useEffect below
   };
 
-  // NEW: Determine if a search has been performed
+  // Determine if a search has been performed
   const hasSearched = currentSearchQuery !== "" || currentSearchLocation !== "";
 
-  // NEW: Smooth scroll to search results when a search is initiated
+  // Smooth scroll to search results when a search is initiated
   useEffect(() => {
     if (hasSearched) {
       scroller.scrollTo("company-page-search-results", {
@@ -106,7 +95,7 @@ const BrowseCompaniesPage: React.FC = () => {
         offset: -80, // Offset to account for fixed header/navbar, adjust as needed
       });
     }
-  }, [hasSearched]); // MODIFIED: Depend on hasSearched to trigger scroll
+  }, [hasSearched]);
 
   return (
     <div className="bg-white min-h-screen">
@@ -135,8 +124,7 @@ const BrowseCompaniesPage: React.FC = () => {
           { text: "Apple", link: "/companies?q=Apple" },
           { text: "Amazon", link: "/companies?q=Amazon" },
         ]}
-        searchType="company"
-        onSearchSubmit={handleSearchSubmit} // MODIFIED: Pass the new handler
+        onSearchSubmit={handleSearchSubmit}
       />
 
       {/* NEW: CompanyPageSearchResults is always rendered if a search is active */}
@@ -207,12 +195,12 @@ const BrowseCompaniesPage: React.FC = () => {
           </>
         )}
       </div>
-      {/* MODIFIED: CallToActionSection moved here, outside the max-w-6xl div, and before the Explore All Companies section */}
+      {/* CallToActionSection moved here, outside the max-w-6xl div, and before the Explore All Companies section */}
       <CallToActionSection />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         {" "}
         {/* Re-added this div for the last section */}
-        {loading ? null : error ? null : ( // For a cleaner approach, you might want to manage loading states more granularly. // this loading state will only apply to the sections within this div. // This loading state is for the *entire* content, but since we separated the CTA, // Already handled above, or could show a specific loader for this section // Already handled above, or could show a specific error for this section
+        {loading ? null : error ? null : (
           <>
             {/* Final Section: Explore All Companies (now showing 8 random) */}
             <section className="mb-12 mt-12">

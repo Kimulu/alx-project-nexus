@@ -1,4 +1,3 @@
-// pages/jobs/[id].tsx
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -6,13 +5,10 @@ import Link from "next/link";
 import {
   MapPin,
   Briefcase,
-  Bookmark,
   Share2,
-  Send,
   ChevronLeft,
   Building2,
   Heart,
-  Coffee,
   DollarSign,
   Laptop,
   Users,
@@ -84,9 +80,17 @@ const JobDetailsPage: React.FC = () => {
           }
           const data: JobDetails = await response.json();
           setJob(data);
-        } catch (err: any) {
-          setError(err.message);
-          console.error("Error fetching job details:", err);
+        } catch (err: unknown) {
+          // Changed 'any' to 'unknown'
+          // Type narrowing for the error object
+          if (err instanceof Error) {
+            setError(err.message);
+            console.error("Error fetching job details:", err);
+          } else {
+            // Handle cases where the error is not an Error object (e.g., a string or other type)
+            setError("An unknown error occurred.");
+            console.error("Unknown error fetching job details:", err);
+          }
         } finally {
           setLoading(false);
         }
@@ -252,7 +256,7 @@ const JobDetailsPage: React.FC = () => {
               )}
             </div>
             <div className="text-center sm:text-left w-full sm:w-auto">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 font-clash mb-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 font-clash">
                 {job.job_title}
               </h1>
               <p className="text-gray-600 text-sm sm:text-base flex flex-wrap justify-center sm:justify-start items-center gap-x-2">
@@ -474,10 +478,10 @@ const JobDetailsPage: React.FC = () => {
             <div>
               <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                 {/* This description would ideally come from a dedicated employer_info field in JSearch API
-                                    or a separate API call for company details. For now, using a placeholder or
-                                    a very short snippet if available. JSearch 'job-details' doesn't provide
-                                    extensive company descriptions directly.
-                                */}
+                    or a separate API call for company details. For now, using a placeholder or
+                    a very short snippet if available. JSearch 'job-details' doesn't provide
+                    extensive company descriptions directly.
+                */}
                 {job.employer_name} is a leading company in its field, committed
                 to innovation and fostering a dynamic work environment. We
                 believe in empowering our employees and driving impactful

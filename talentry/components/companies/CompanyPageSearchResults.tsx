@@ -20,6 +20,27 @@ interface Job {
   job_salary_max?: number;
 }
 
+// Define the structure of a job object as received from the API
+interface RawJobData {
+  job_id: string;
+  employer_logo: string | null;
+  job_title: string;
+  employer_name: string;
+  job_city?: string;
+  job_state?: string;
+  job_country?: string;
+  job_is_remote?: boolean;
+  job_employment_type_text?: string;
+  job_employment_type?: string;
+  job_category?: string;
+  job_highlights?: {
+    Qualifications?: string[];
+  };
+  job_posted_at_timestamp?: number;
+  job_salary_min?: number;
+  job_salary_max?: number;
+}
+
 interface CompanyPageSearchResultsProps {
   searchQuery: string;
   location: string;
@@ -63,7 +84,8 @@ const CompanyPageSearchResults: React.FC<CompanyPageSearchResultsProps> = ({
         }
         const data = await response.json();
 
-        const mappedJobs: Job[] = data.data.map((job: any) => {
+        // Explicitly type the job parameter as RawJobData
+        const mappedJobs: Job[] = data.data.map((job: RawJobData) => {
           const jobType =
             job.job_employment_type_text ||
             (job.job_employment_type
@@ -75,7 +97,7 @@ const CompanyPageSearchResults: React.FC<CompanyPageSearchResultsProps> = ({
           if (job.job_category) {
             jobCategories = [job.job_category];
           } else if (job.job_highlights && job.job_highlights.Qualifications) {
-            jobCategories = [];
+            jobCategories = []; // Keep as empty if no specific category but qualifications exist
           }
 
           let jobLocation = "Remote";
@@ -103,8 +125,14 @@ const CompanyPageSearchResults: React.FC<CompanyPageSearchResultsProps> = ({
           };
         });
         setSearchResults(mappedJobs);
-      } catch (err: any) {
-        setSearchError(err.message);
+      } catch (err: unknown) {
+        // Changed 'any' to 'unknown'
+        if (err instanceof Error) {
+          // Type narrowing for the error object
+          setSearchError(err.message);
+        } else {
+          setSearchError("An unknown error occurred.");
+        }
         console.error("Error fetching jobs for company search:", err);
         setSearchResults([]);
       } finally {
@@ -125,7 +153,7 @@ const CompanyPageSearchResults: React.FC<CompanyPageSearchResultsProps> = ({
     <section className="bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-20 md:py-14">
         <h2 className="text-3xl font-bold font-clash mb-8 text-center">
-          Jobs at "{searchQuery || "All Companies"}"{" "}
+          Jobs at &quot;{searchQuery || "All Companies"}&quot;{" "}
           {location && `in ${location}`}
         </h2>
 

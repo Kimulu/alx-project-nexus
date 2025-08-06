@@ -187,12 +187,20 @@ const SignUpPage = () => {
       } else {
         setApiError(data.message || "Signup failed. Please try again.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // Changed 'any' to 'unknown'
       console.error("Signup error:", err);
-      setApiError(
-        err.message ||
+      // Type narrowing for the error object
+      if (err instanceof Error) {
+        setApiError(
+          err.message ||
+            "An unexpected error occurred during signup. Please try again."
+        );
+      } else {
+        setApiError(
           "An unexpected error occurred during signup. Please try again."
-      );
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -237,8 +245,8 @@ const SignUpPage = () => {
             </div>
           </div>
           <p className="italic text-gray-700">
-            "Great platform for the job seeker that searching for new career
-            heights."
+            &quot;Great platform for the job seeker that searching for new
+            career heights.&quot;
           </p>
         </div>
       </div>

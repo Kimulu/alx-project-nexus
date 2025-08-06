@@ -28,17 +28,31 @@ if (
   );
 } else {
   // Fallback for Canvas environment if direct env vars are not set
+  // This assumes __firebase_config is globally available in the Canvas environment
+  // and contains at least projectId.
   if (typeof __firebase_config !== "undefined" && __firebase_config) {
     try {
       const parsedConfig = JSON.parse(__firebase_config);
       firebaseConfig.projectId = parsedConfig.projectId;
-    } catch (e) {
-      console.error("Error parsing __firebase_config for Admin SDK:", e);
+      // Note: clientEmail and privateKey are typically not exposed via __firebase_config
+      // for client-side Firebase SDK. For Admin SDK, these must come from secure env vars.
+    } catch (e: unknown) {
+      // Explicitly type 'e' as unknown
+      if (e instanceof Error) {
+        console.error(
+          "Error parsing __firebase_config for Admin SDK:",
+          e.message
+        );
+      } else {
+        console.error("Error parsing __firebase_config for Admin SDK:", e);
+      }
     }
   }
 }
 
 // Get the Canvas application ID for Firestore paths
+// This assumes __app_id is globally available in the Canvas environment.
+declare const __app_id: string | undefined; // Declare __app_id for TypeScript
 const appId = typeof __app_id !== "undefined" ? __app_id : "default-app-id";
 
 // Initialize Firebase Admin SDK only once
@@ -61,10 +75,17 @@ if (!admin.apps.length) {
       console.warn(
         "Firebase Admin SDK credentials (projectId, clientEmail, privateKey) are incomplete. Attempting to initialize without explicit credentials (might rely on Google Cloud default credentials)."
       );
+      // Attempt to initialize without explicit credentials if running in a Google Cloud environment
+      // where default credentials might be available.
       admin.initializeApp();
     }
-  } catch (e) {
-    console.error("Failed to initialize Firebase Admin SDK:", e);
+  } catch (e: unknown) {
+    // Safely check if 'e' is an Error instance to access its message
+    if (e instanceof Error) {
+      console.error("Failed to initialize Firebase Admin SDK:", e.message);
+    } else {
+      console.error("Failed to initialize Firebase Admin SDK:", e);
+    }
   }
 }
 
@@ -80,6 +101,7 @@ export default async function handler(
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
+  // Ensure Admin SDK is initialized before proceeding with operations
   if (!admin.apps.length) {
     return res.status(500).json({
       message:
@@ -101,11 +123,9 @@ export default async function handler(
     const firebaseWebApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     if (!firebaseWebApiKey) {
       console.error("FIREBASE_API_KEY environment variable is not set.");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error: Firebase API Key missing.",
-        });
+      return res.status(500).json({
+        message: "Server configuration error: Firebase API Key missing.",
+      });
     }
 
     const signInResponse = await fetch(
@@ -159,11 +179,9 @@ export default async function handler(
       // Even if user data isn't in Firestore, if they authenticated with Firebase Auth,
       // we can still proceed, perhaps with a default role, or prompt them to complete profile.
       // For now, we'll return an error.
-      return res
-        .status(404)
-        .json({
-          message: "User profile not found. Please complete your registration.",
-        });
+      return res.status(404).json({
+        message: "User profile not found. Please complete your registration.",
+      });
     }
 
     const userData = userDoc.data();
@@ -173,10 +191,23 @@ export default async function handler(
     const customToken = await auth.createCustomToken(uid, { role: userRole });
 
     return res.status(200).json({ token: customToken, role: userRole });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login API error:", error);
+    let errorMessage = "An unexpected error occurred during login.";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof (error as { message?: unknown }).message === "string"
+    ) {
+      // If it's an object with a 'message' property that is a string, use it.
+      errorMessage = (error as { message: string }).message;
+    }
     return res.status(500).json({
-      message: error.message || "An unexpected error occurred during login.",
+      message: errorMessage,
     });
   }
 }

@@ -1,17 +1,16 @@
 // pages/api/jobs.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-// Import necessary Firestore functions
+// Import necessary Firebase functions
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import {
   getFirestore,
   collection,
   query,
-  where,
   getDocs,
   orderBy,
-  limit,
   Firestore,
-} from "firebase/firestore";
+  // DocumentData // Removed as it's not directly used for type inference in this context
+} from "firebase/firestore"; // 'where' and 'limit' removed as they were unused
 
 // Define a minimal interface for the Firebase configuration object
 interface FirebaseConfig {
@@ -21,19 +20,55 @@ interface FirebaseConfig {
   // Add other Firebase config properties here if needed
 }
 
+// Define interfaces for job data structure for better type safety
+interface JobHighlight {
+  Qualifications?: string[];
+  Responsibilities?: string[];
+  // Add other highlight types if they exist in your data
+}
+
+// Define the core job data structure that comes from Firestore document data
+interface RawJobData {
+  job_title?: string;
+  employer_name?: string;
+  job_description?: string;
+  job_country?: string;
+  job_is_remote?: boolean;
+  job_employment_type?: string;
+  job_category?: string;
+  job_salary_min?: number;
+  job_salary_max?: number;
+  job_highlights?: JobHighlight;
+  job_posted_at_timestamp?: number; // Assuming this is a number (Unix timestamp)
+  // Add any other properties that might be returned by doc.data()
+}
+
+// Define the final JobData structure that includes the document ID
+interface JobData extends RawJobData {
+  id: string; // This will explicitly come from doc.id
+}
+
 // Firebase configuration (provided by Canvas environment, or manually constructed)
 let firebaseConfig: FirebaseConfig = {};
 
 // Attempt to parse __firebase_config if available
 // This is a global variable provided by the Canvas environment for Firebase setup.
+declare const __firebase_config: string | undefined; // Declare __firebase_config for TypeScript
 if (typeof __firebase_config !== "undefined" && __firebase_config) {
   try {
     firebaseConfig = JSON.parse(__firebase_config) as FirebaseConfig;
-  } catch (e) {
-    console.error(
-      "Error parsing __firebase_config. It might not be valid JSON:",
-      e
-    );
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      console.error(
+        "Error parsing __firebase_config. It might not be valid JSON:",
+        e.message
+      );
+    } else {
+      console.error(
+        "Error parsing __firebase_config. It might not be valid JSON:",
+        e
+      );
+    }
   }
 }
 
@@ -54,6 +89,7 @@ if (!firebaseConfig.projectId) {
 }
 
 // Get the Canvas application ID. This is used to create unique Firestore collection paths.
+declare const __app_id: string | undefined; // Declare __app_id for TypeScript
 const appId = typeof __app_id !== "undefined" ? __app_id : "default-app-id";
 
 let app: FirebaseApp | null; // Firebase app instance
@@ -82,12 +118,19 @@ try {
     // If app initialization failed, set db to null.
     db = null;
   }
-} catch (e) {
+} catch (e: unknown) {
   // Catch any errors during Firebase initialization.
-  console.error(
-    "Failed to initialize Firebase app during module load for API:",
-    e
-  );
+  if (e instanceof Error) {
+    console.error(
+      "Failed to initialize Firebase app during module load for API:",
+      e.message
+    );
+  } else {
+    console.error(
+      "Failed to initialize Firebase app during module load for API:",
+      e
+    );
+  }
   app = null;
   db = null;
 }
@@ -129,7 +172,7 @@ export default async function handler(
       `artifacts/${appId}/public/data/jobs`
     );
 
-    let jobsData: any[] = [];
+    const jobsData: JobData[] = []; // Changed 'let' to 'const' and specified type 'JobData[]'
 
     // Determine if a specific search (query OR location) is active.
     // If searchQueryParam is 'all' or empty AND location is empty, it's an "initial load" scenario.
@@ -144,22 +187,23 @@ export default async function handler(
       const initialFirestoreQuery = query(
         jobsCollectionRef, // Start with the collection ref
         orderBy("job_posted_at_timestamp", "desc") // Order by newest first
-        // limit(totalLimit) // This line was removed to fetch all jobs
       );
       const querySnapshot = await getDocs(initialFirestoreQuery);
       querySnapshot.forEach((doc) => {
-        jobsData.push({ id: doc.id, ...doc.data() });
+        // Corrected: Spread doc.data() first, then explicitly add id
+        jobsData.push({ ...(doc.data() as RawJobData), id: doc.id });
       });
     } else {
       // Scenario 2: A specific search query OR location is provided.
       // Fetch ALL documents for comprehensive client-side regex filtering.
       const querySnapshot = await getDocs(jobsCollectionRef); // Fetch all documents
       querySnapshot.forEach((doc) => {
-        jobsData.push({ id: doc.id, ...doc.data() });
+        // Corrected: Spread doc.data() first, then explicitly add id
+        jobsData.push({ ...(doc.data() as RawJobData), id: doc.id });
       });
     }
 
-    let filteredJobs = jobsData;
+    let filteredJobs: JobData[] = jobsData; // Explicitly type filteredJobs
 
     // --- Apply Regex-like Filtering (Client-side in API route) ---
 
@@ -181,8 +225,12 @@ export default async function handler(
             (job.job_description &&
               regex.test(job.job_description.toLowerCase()))
         );
-      } catch (e) {
-        console.error("Invalid regex in search query:", e);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Invalid regex in search query:", e.message);
+        } else {
+          console.error("Invalid regex in search query:", e);
+        }
         // Optionally, handle as an error or fall back to a non-regex search
       }
     }
@@ -201,8 +249,12 @@ export default async function handler(
 
           return countryMatch || remoteMatch;
         });
-      } catch (e) {
-        console.error("Invalid regex in location query:", e);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Invalid regex in location query:", e.message);
+        } else {
+          console.error("Invalid regex in location query:", e);
+        }
         // Optionally, handle as an error or fall back
       }
     }
@@ -213,8 +265,10 @@ export default async function handler(
     // Filter by employment_types
     if (employment_types && typeof employment_types === "string") {
       const typesArray = employment_types.toUpperCase().split(",");
-      filteredJobs = filteredJobs.filter((job) =>
-        typesArray.includes(job.job_employment_type)
+      filteredJobs = filteredJobs.filter(
+        (job) =>
+          job.job_employment_type &&
+          typesArray.includes(job.job_employment_type)
       );
     }
 
@@ -232,13 +286,15 @@ export default async function handler(
     if (salary_min && typeof salary_min === "string") {
       const minSalary = parseFloat(salary_min);
       filteredJobs = filteredJobs.filter(
-        (job) => job.job_salary_min >= minSalary
+        (job) =>
+          job.job_salary_min !== undefined && job.job_salary_min >= minSalary
       );
     }
     if (salary_max && typeof salary_max === "string") {
       const maxSalary = parseFloat(salary_max);
       filteredJobs = filteredJobs.filter(
-        (job) => job.job_salary_max <= maxSalary
+        (job) =>
+          job.job_salary_max !== undefined && job.job_salary_max <= maxSalary
       );
     }
 
@@ -280,10 +336,22 @@ export default async function handler(
       data: jobsToSend, // Return all filtered jobs if not a specific search, else paginated
       total_results: filteredJobs.length, // Total results before pagination
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching jobs from Firestore:", error);
+    let errorMessage =
+      "Internal server error while fetching jobs from database.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof (error as { message?: unknown }).message === "string" // Safely check and cast
+    ) {
+      errorMessage = (error as { message: string }).message; // Assert to the correct type
+    }
     return res.status(500).json({
-      error: "Internal server error while fetching jobs from database.",
+      error: errorMessage,
     });
   }
 }

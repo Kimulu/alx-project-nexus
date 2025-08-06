@@ -10,7 +10,7 @@ interface JobFilterAndListingsProps {
   shouldFetchAll: boolean; // Prop to indicate if all available results should be fetched
 }
 
-// Define the Job interface to explicitly type the job objects
+// Define the Job interface to explicitly type the job objects for the *mapped* data
 interface Job {
   id: string;
   companyLogo: string | null;
@@ -29,6 +29,33 @@ interface Job {
   job_employment_type?: string;
   job_category?: string;
   job_requirements?: string[];
+}
+
+// Define an interface for the raw data received directly from the JSearch API
+interface RawJobData {
+  job_id: string;
+  employer_logo: string | null;
+  job_title: string;
+  employer_name: string;
+  job_employment_type_text?: string;
+  job_employment_type?: string;
+  job_category?: string;
+  job_highlights?: {
+    Qualifications?: string[];
+    Responsibilities?: string[];
+    // Allowing for other arbitrary properties in job_highlights, assuming they are string arrays or undefined
+    [key: string]: string[] | undefined;
+  };
+  job_city?: string;
+  job_state?: string;
+  job_country?: string;
+  job_is_remote?: boolean;
+  job_posted_at_timestamp?: number;
+  job_salary_min?: number;
+  job_salary_max?: number;
+  job_requirements?: string[];
+  // Removed [key: string]: any; from RawJobData as specific properties are already defined.
+  // If there are truly other arbitrary top-level properties, they should be added explicitly.
 }
 
 const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
@@ -65,39 +92,52 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Filter options with values mapped to JSearch API parameters
-  const employmentTypes = [
-    { label: "Full-time", value: "FULLTIME" },
-    { label: "Part-Time", value: "PARTTIME" },
-    { label: "Remote", value: "REMOTE" },
-    { label: "Internship", value: "INTERNSHIP" },
-    { label: "Contract", value: "CONTRACT" },
-  ];
+  // Wrapped in useMemo to prevent re-creation on every render, addressing the useEffect warning.
+  const employmentTypes = useMemo(
+    () => [
+      { label: "Full-time", value: "FULLTIME" },
+      { label: "Part-Time", value: "PARTTIME" },
+      { label: "Remote", value: "REMOTE" },
+      { label: "Internship", value: "INTERNSHIP" },
+      { label: "Contract", value: "CONTRACT" },
+    ],
+    []
+  );
 
-  const categories = [
-    { label: "Design", value: "Design" },
-    { label: "Sales", value: "Sales" },
-    { label: "Marketing", value: "Marketing" },
-    { label: "Business", value: "Business" },
-    { label: "Human Resource", value: "Human Resource" },
-    { label: "Finance", value: "Finance" },
-    { label: "Engineering", value: "Engineering" },
-    { label: "Technology", value: "Technology" },
-  ];
+  const categories = useMemo(
+    () => [
+      { label: "Design", value: "Design" },
+      { label: "Sales", value: "Sales" },
+      { label: "Marketing", value: "Marketing" },
+      { label: "Business", value: "Business" },
+      { label: "Human Resource", value: "Human Resource" },
+      { label: "Finance", value: "Finance" },
+      { label: "Engineering", value: "Engineering" },
+      { label: "Technology", value: "Technology" },
+    ],
+    []
+  );
 
-  const jobLevels = [
-    { label: "Entry Level", value: "entry_level" },
-    { label: "Mid Level", value: "mid_level" },
-    { label: "Senior Level", value: "senior_level" },
-    { label: "Director", value: "director" },
-    { label: "VP or Above", value: "vp_and_above" },
-  ];
+  const jobLevels = useMemo(
+    () => [
+      { label: "Entry Level", value: "entry_level" },
+      { label: "Mid Level", value: "mid_level" },
+      { label: "Senior Level", value: "senior_level" },
+      { label: "Director", value: "director" },
+      { label: "VP or Above", value: "vp_and_above" },
+    ],
+    []
+  );
 
-  const salaryRanges = [
-    { label: "$700 - $1000", min: 700, max: 1000 },
-    { label: "$1000 - $1500", min: 1000, max: 1500 },
-    { label: "$1500 - $2000", min: 1500, max: 2000 },
-    { label: "$3000 or above", min: 3000, max: null }, // max is null for "or above"
-  ];
+  const salaryRanges = useMemo(
+    () => [
+      { label: "$700 - $1000", min: 700, max: 1000 },
+      { label: "$1000 - $1500", min: 1000, max: 1500 },
+      { label: "$1500 - $2000", min: 1500, max: 2000 },
+      { label: "$3000 or above", min: 3000, max: null }, // max is null for "or above"
+    ],
+    []
+  );
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -177,7 +217,8 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
         }
         const data = await response.json();
 
-        const mappedJobs: Job[] = data.data.map((job: any) => {
+        // Type the incoming 'job' directly from the API response
+        const mappedJobs: Job[] = data.data.map((job: RawJobData) => {
           const jobType =
             job.job_employment_type_text ||
             (job.job_employment_type
@@ -224,9 +265,15 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
           };
         });
         setJobs(mappedJobs);
-      } catch (err: any) {
-        setError(err.message);
-        console.error("Error fetching jobs:", err); // Log the error for debugging
+      } catch (err: unknown) {
+        // Safely check if err is an instance of Error
+        if (err instanceof Error) {
+          setError(err.message);
+          console.error("Error fetching jobs:", err.message); // Log the error for debugging
+        } else {
+          setError("An unknown error occurred.");
+          console.error("An unknown error occurred:", err);
+        }
       } finally {
         setLoading(false);
       }
@@ -240,12 +287,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
     selectedEmploymentTypes, // Dependency for re-fetching when employment types change
     selectedCategories, // Dependency for re-fetching when categories change
     selectedJobLevels, // Dependency for re-fetching when job levels change
-    selectedSalaryRanges, // Dependency for re-fetching when salary ranges change
+    selectedSalaryRanges, // Added salaryRanges to dependencies
+    salaryRanges, // salaryRanges is now memoized, so it's a stable dependency
   ]);
 
   // Client-side sorting applied directly to the jobs fetched from the API
   const sortedJobs = useMemo(() => {
-    let sortableJobs = [...jobs];
+    const sortableJobs = [...jobs];
     switch (sortBy) {
       case "Newest":
         sortableJobs.sort(
@@ -567,9 +615,13 @@ const JobFilterAndListings: React.FC<JobFilterAndListingsProps> = ({
                 isGridView ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
               }`}
             >
-              {sortedJobs.map((job: any) => (
-                <JobCard key={job.id} {...job} />
-              ))}
+              {sortedJobs.map(
+                (
+                  job: Job // Explicitly typed as 'Job'
+                ) => (
+                  <JobCard key={job.id} {...job} />
+                )
+              )}
             </div>
           )}
         </main>

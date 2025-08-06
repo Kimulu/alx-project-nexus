@@ -2,6 +2,26 @@
 import React from "react";
 import Link from "next/link";
 import { useJobs } from "@/context/JobsContext"; // Import the JobsContext hook
+
+// Define the Job interface, assuming it's consistent with what JobCard expects
+// If this interface is already defined globally or in JobCard's types,
+// you might not need to redefine it here, but it's good for clarity
+// if JobsContext doesn't explicitly type its searchResults.
+interface Job {
+  id: string;
+  companyLogo: string | null;
+  jobTitle: string;
+  companyName: string;
+  location: string;
+  jobType: string;
+  categories: string[];
+  appliedCount: number;
+  capacity: number;
+  job_posted_at_timestamp?: number;
+  job_salary_min?: number;
+  job_salary_max?: number;
+}
+
 import JobCard from "@/components/jobs/JobCard"; // Import JobCard component
 
 const HomePageSearchResults = () => {
@@ -21,7 +41,7 @@ const HomePageSearchResults = () => {
     <section className="bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-20 md:py-14">
         <h2 className="text-3xl font-bold font-clash mb-8 text-center">
-          Search Results for "{searchQuery || "All Jobs"}"{" "}
+          Search Results for &quot;{searchQuery || "All Jobs"}&quot;{" "}
           {location && `in ${location}`}
         </h2>
 
@@ -43,7 +63,7 @@ const HomePageSearchResults = () => {
               {/* Display a limited number of results to encourage going to the jobs page */}
               {searchResults.slice(0, 6).map(
                 (
-                  job: any // Use searchResults
+                  job: Job // Explicitly type 'job' as 'Job'
                 ) => (
                   <JobCard key={job.id} {...job} />
                 )

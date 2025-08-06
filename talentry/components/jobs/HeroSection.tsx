@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react"; // Import useEffect for initial state
 import Link from "next/link";
-import Image from "next/image";
 import { Search, MapPin, ChevronDown } from "lucide-react";
 
 // Define the props interface for clarity and type safety
@@ -9,10 +8,8 @@ interface HeroSectionProps {
   mainTitle: React.ReactNode;
   subTitle: string;
   searchPlaceholder: string;
-  locationDefaultValue?: string;
   searchButtonText: string;
   popularSearches: { text: string; link: string }[];
-  searchType: "job" | "company";
   // New props for controlled search inputs
   onSearchSubmit: (query: string, location: string) => void; // Callback to parent
   initialSearchQuery?: string; // Initial value for query input
@@ -23,10 +20,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   mainTitle,
   subTitle,
   searchPlaceholder,
-  locationDefaultValue = "Florence, Italy",
   searchButtonText,
   popularSearches,
-  searchType,
   onSearchSubmit, // Destructure the callback prop
   initialSearchQuery = "", // Default empty if not provided
   initialLocation = "", // Default empty if not provided
