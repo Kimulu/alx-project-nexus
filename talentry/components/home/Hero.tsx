@@ -54,7 +54,7 @@ const Hero = () => {
         }}
       >
         <img
-          src="/pattern.svg"
+          src="/Pattern.svg"
           alt="Background pattern"
           className="w-full h-full object-contain object-left opacity-70"
         />
