@@ -125,14 +125,6 @@ const LoginPage = () => {
     if (loadingAuth) {
       return;
     }
-
-    // If Firebase is ready and a user is already authenticated, redirect to dashboard
-    if (isFirebaseReady && currentUser) {
-      console.log(
-        "Login Page: Already authenticated, redirecting to dashboard."
-      );
-      router.push("/ApplicantDashboard");
-    }
   }, [loadingAuth, isFirebaseReady, currentUser, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

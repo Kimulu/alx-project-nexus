@@ -3,9 +3,50 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { LogOut, UserCircle } from "lucide-react"; // Only necessary icons for UI
+import { LogOut, UserCircle } from "lucide-react";
+import { useFirebase } from "@/context/FirebaseContext"; // Import the Firebase context hook
+import { signOut } from "firebase/auth"; // Import signOut function
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
 
 const ApplicantDashboard = () => {
+  const { auth, userId, isFirebaseReady, firebaseError } = useFirebase(); // Get auth and userId from context
+  const router = useRouter(); // Initialize router
+
+  const handleLogout = async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+        console.log("User logged out successfully.");
+        router.push("/"); // Redirect to the home/login page after logout
+      } catch (error: any) {
+        console.error("Error logging out:", error.message);
+        // You might want to display an error message to the user here
+      }
+    }
+  };
+
+  if (firebaseError) {
+    return (
+      <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full text-center text-red-700 bg-red-100 border border-red-400 rounded-lg p-4">
+          <p className="font-bold">Firebase Error:</p>
+          <p>{firebaseError}</p>
+          <p className="mt-2 text-sm">
+            Please check your Firebase configuration.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isFirebaseReady) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-700 text-lg">Loading Firebase...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
@@ -25,7 +66,7 @@ const ApplicantDashboard = () => {
           <p className="mt-1 text-sm text-gray-500 text-center">
             Your User ID:{" "}
             <span className="font-mono text-gray-700 break-all">
-              user-id-placeholder-1234567890abcde
+              {userId || "Not available"} {/* Display actual userId */}
             </span>
           </p>
         </div>
@@ -96,7 +137,7 @@ const ApplicantDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            // onClick={handleLogout} // Removed logic
+            onClick={handleLogout}
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
           >
             <LogOut className="mr-2" size={20} />

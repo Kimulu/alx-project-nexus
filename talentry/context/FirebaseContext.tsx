@@ -37,6 +37,8 @@ interface FirebaseContextType {
   userId: string | null;
   isFirebaseReady: boolean;
   firebaseError: string | null;
+  currentUser: User | null; // ADDED: currentUser property
+  loadingAuth: boolean; // ADDED: loadingAuth property
 }
 
 // Create the context
@@ -64,6 +66,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   const [userId, setUserId] = useState<string | null>(null);
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null); // ADDED: currentUser state
+  const [loadingAuth, setLoadingAuth] = useState(true); // ADDED: loadingAuth state, initialized to true
 
   useEffect(() => {
     const initFirebase = async () => {
@@ -84,6 +88,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             setFirebaseError(
               "Failed to parse Firebase configuration from global variable."
             );
+            setLoadingAuth(false); // Ensure loadingAuth is false on error
             return;
           }
         } else {
@@ -114,6 +119,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
               "Missing critical Firebase environment variables (API Key, Auth Domain, or Project ID). Please ensure they are set in your .env.local file and prefixed with NEXT_PUBLIC_.";
             console.error("FirebaseProvider:", msg, firebaseConfig);
             setFirebaseError(msg);
+            setLoadingAuth(false); // Ensure loadingAuth is false on error
             return;
           }
         }
@@ -135,6 +141,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
         // Set up auth state listener
         const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
+          setCurrentUser(user); // UPDATED: Set currentUser state
+          setLoadingAuth(false); // UPDATED: Set loadingAuth to false once auth state is known
+
           if (user) {
             // User is signed in
             setUserId(user.uid);
@@ -203,6 +212,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           err.message || "Failed to initialize Firebase services."
         );
         setIsFirebaseReady(false);
+        setLoadingAuth(false); // Ensure loadingAuth is false on error
       }
     };
 
@@ -216,7 +226,17 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     userId,
     isFirebaseReady,
     firebaseError,
+    currentUser, // ADDED: Provide currentUser in context value
+    loadingAuth, // ADDED: Provide loadingAuth in context value
   };
+
+  // Ensure contextValue is not undefined when passed to provider
+  // This check is important because createContext was called with `undefined` as a possible type
+  if (contextValue === undefined) {
+    throw new Error(
+      "FirebaseContext value is undefined. This should not happen."
+    );
+  }
 
   return (
     <FirebaseContext.Provider value={contextValue}>
