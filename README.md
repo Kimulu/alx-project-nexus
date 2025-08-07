@@ -32,7 +32,7 @@ Filter jobs based on:
 
 ## 🛠️ Technologies Used
 
-- **React / React Native** – Component-based UI development.
+- **NextJS** – Component-based UI development.
 - **Context API** – Efficient and scalable state management.
 - **Tailwind CSS** – Fast and modern UI styling.
 - **Firebase** – Authentication and Firestore database.
